@@ -339,6 +339,139 @@ body {
     font-size: 13px;
 }
 
+/* Node Details Modal */
+.node-details {
+    font-family: 'Courier New', monospace;
+}
+
+.detail-section {
+    margin-bottom: 20px;
+}
+
+.detail-section h3 {
+    color: #00ffff;
+    margin-bottom: 8px;
+    font-size: 14px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 4px;
+}
+
+.original-text, .putin-response {
+    background: rgba(0, 255, 0, 0.05);
+    border: 1px solid #333;
+    padding: 12px;
+    border-radius: 4px;
+    color: #ddd;
+    line-height: 1.4;
+    font-size: 13px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.putin-response {
+    background: rgba(255, 100, 0, 0.05);
+    border-color: #ff6600;
+}
+
+.node-meta {
+    color: #888;
+    font-size: 11px;
+    margin-bottom: 10px;
+}
+
+.node-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.node-actions button {
+    background: rgba(0, 255, 0, 0.1);
+    border: 1px solid #00ff00;
+    color: #00ff00;
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+}
+
+.node-actions button:hover {
+    background: rgba(0, 255, 0, 0.2);
+    color: #44ff44;
+}
+
+/* Evolution Path Styling */
+.evolution-path {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #333;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 10px;
+}
+
+.evolution-step {
+    margin-bottom: 12px;
+    padding: 8px;
+    border-left: 3px solid #666;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.evolution-step.current-node {
+    border-left-color: #ffff00;
+    background: rgba(255, 255, 0, 0.05);
+}
+
+.step-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 11px;
+}
+
+.step-label {
+    color: #00ffff;
+    font-weight: bold;
+}
+
+.step-score {
+    color: #ffaa44;
+}
+
+.step-id {
+    color: #888;
+    font-family: monospace;
+}
+
+.step-content {
+    font-size: 12px;
+}
+
+.step-prompt {
+    color: #ddd;
+    margin-bottom: 4px;
+    padding: 4px 6px;
+    background: rgba(0, 255, 0, 0.05);
+    border-radius: 2px;
+    font-style: italic;
+}
+
+.step-reply {
+    color: #ffaa88;
+    padding: 4px 6px;
+    background: rgba(255, 100, 0, 0.05);
+    border-radius: 2px;
+    font-size: 11px;
+}
+
+.evolution-arrow {
+    text-align: center;
+    color: #666;
+    margin: 6px 0;
+    font-size: 16px;
+}
+
 @media (max-width: 1200px) {
     .main {
         flex-direction: column;

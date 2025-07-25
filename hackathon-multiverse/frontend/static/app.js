@@ -90,9 +90,121 @@ class MultiverseVisualizer {
             }
         });
         
-        this.canvas.addEventListener('mouseup', () => {
+        this.canvas.addEventListener('mouseup', (e) => {
+            if (!isDragging) {
+                // Check if click is on a node
+                this.handleCanvasClick(e.offsetX, e.offsetY);
+            }
             isDragging = false;
         });
+    }
+    
+    handleCanvasClick(canvasX, canvasY) {
+        const clickedNode = this.findNodeAtPosition(canvasX, canvasY);
+        if (clickedNode) {
+            this.showNodeDetailsModal(clickedNode);
+        }
+    }
+    
+    findNodeAtPosition(canvasX, canvasY) {
+        // Find node at click position
+        for (const node of this.nodes) {
+            if (!node.xy) continue;
+            
+            const nodeX = this.offsetX + node.xy[0] * this.scale;
+            const nodeY = this.offsetY + node.xy[1] * this.scale;
+            
+            // Skip if outside canvas bounds
+            if (nodeX < -20 || nodeX > this.canvas.width + 20 || nodeY < -20 || nodeY > this.canvas.height + 20) continue;
+            
+            const depth = this.getNodeDepth(node);
+            const radius = Math.max(3, Math.min(12, 5 + depth));
+            
+            // Check if click is within node radius
+            const distance = Math.sqrt((canvasX - nodeX) ** 2 + (canvasY - nodeY) ** 2);
+            if (distance <= radius) {
+                return node;
+            }
+        }
+        return null;
+    }
+    
+    showNodeDetailsModal(node) {
+        // Remove existing modal if present
+        const existingModal = document.getElementById('nodeDetailsModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Get evolution path
+        const evolutionPath = this.getEvolutionPath(node);
+        
+        // Create modal
+        const modal = document.createElement('div');
+        modal.id = 'nodeDetailsModal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Node Details</h2>
+                    <div class="node-meta">
+                        ID: ${node.id.slice(0, 12)}... | 
+                        Score: ${node.score?.toFixed(3) || 'N/A'} | 
+                        Depth: ${this.getNodeDepth(node)} |
+                        Position: (${node.xy[0]?.toFixed(2)}, ${node.xy[1]?.toFixed(2)})
+                    </div>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="node-details">
+                        <div class="detail-section">
+                            <h3>Original Text (Pre-embedding):</h3>
+                            <div class="original-text">${node.prompt || 'No prompt available'}</div>
+                        </div>
+                        
+                        ${node.reply ? `
+                        <div class="detail-section">
+                            <h3>Putin's Response:</h3>
+                            <div class="putin-response">${node.reply}</div>
+                        </div>
+                        ` : ''}
+                        
+                        ${evolutionPath.length > 1 ? `
+                        <div class="detail-section">
+                            <h3>Evolution Path (${evolutionPath.length} steps):</h3>
+                            <div class="evolution-path">
+                                ${this.renderEvolutionPath(evolutionPath)}
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        <div class="detail-section">
+                            <h3>Actions:</h3>
+                            <div class="node-actions">
+                                <button onclick="window.visualizer.showConversationModal('${node.id}')">View Full Conversation</button>
+                                <button onclick="window.visualizer.highlightSimilarNodes('${node.id}')">Highlight Similar Nodes</button>
+                                ${evolutionPath.length > 1 ? `<button onclick="window.visualizer.highlightEvolutionPath('${node.id}')">Highlight Path</button>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Add event listeners
+        const closeBtn = modal.querySelector('.close');
+        closeBtn.addEventListener('click', () => modal.remove());
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+        
+        // Show modal
+        modal.style.display = 'block';
     }
     
     handleNodeUpdate(update) {
@@ -363,9 +475,14 @@ class MultiverseVisualizer {
             ctx.arc(x, y, radius, 0, 2 * Math.PI);
             ctx.fill();
             
-            // Node border
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 1;
+            // Node border (highlight if part of evolution path)
+            if (this.highlightedPath && this.highlightedPath.has(node.id)) {
+                ctx.strokeStyle = '#ffff00';
+                ctx.lineWidth = 3;
+            } else {
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1;
+            }
             ctx.stroke();
             
             // Score text for high-scoring nodes
@@ -404,9 +521,80 @@ class MultiverseVisualizer {
         ctx.lineTo(this.offsetX, this.offsetY + 10);
         ctx.stroke();
     }
+    
+    getEvolutionPath(node) {
+        const path = [node];
+        let current = node;
+        const visited = new Set();
+        
+        // Trace back through parents to root
+        while (current && current.parent && !visited.has(current.id)) {
+            visited.add(current.id);
+            const parent = this.nodes.find(n => n.id === current.parent);
+            if (parent) {
+                path.unshift(parent); // Add to beginning to get root-to-node order
+                current = parent;
+            } else {
+                break;
+            }
+            
+            // Safety check to prevent infinite loops
+            if (path.length > 20) break;
+        }
+        
+        return path;
+    }
+    
+    renderEvolutionPath(evolutionPath) {
+        return evolutionPath.map((pathNode, index) => {
+            const isLast = index === evolutionPath.length - 1;
+            const isRoot = index === 0;
+            const stepLabel = isRoot ? 'ROOT' : `Step ${index}`;
+            
+            return `
+                <div class="evolution-step ${isLast ? 'current-node' : ''}">
+                    <div class="step-header">
+                        <span class="step-label">${stepLabel}</span>
+                        <span class="step-score">Score: ${pathNode.score?.toFixed(3) || 'N/A'}</span>
+                        <span class="step-id">${pathNode.id.slice(0, 8)}...</span>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-prompt">${pathNode.prompt || 'Root node'}</div>
+                        ${pathNode.reply ? `<div class="step-reply">→ ${pathNode.reply.slice(0, 100)}${pathNode.reply.length > 100 ? '...' : ''}</div>` : ''}
+                    </div>
+                    ${!isLast ? '<div class="evolution-arrow">↓</div>' : ''}
+                </div>
+            `;
+        }).join('');
+    }
+    
+    highlightEvolutionPath(nodeId) {
+        const node = this.nodes.find(n => n.id === nodeId);
+        if (!node) return;
+        
+        const evolutionPath = this.getEvolutionPath(node);
+        const pathIds = new Set(evolutionPath.map(n => n.id));
+        
+        // Store the highlighted path for rendering
+        this.highlightedPath = pathIds;
+        
+        // Clear highlight after 5 seconds
+        setTimeout(() => {
+            this.highlightedPath = null;
+        }, 5000);
+        
+        // Show message
+        alert(`Highlighting evolution path with ${evolutionPath.length} nodes for 5 seconds`);
+    }
+    
+    highlightSimilarNodes(nodeId) {
+        // This could be enhanced to highlight nodes with similar embeddings
+        // For now, just show a message
+        alert(`Feature coming soon: Highlight nodes similar to ${nodeId.slice(0, 8)}...`);
+    }
 }
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {
-    new MultiverseVisualizer();
+    window.visualizer = new MultiverseVisualizer();
 });
