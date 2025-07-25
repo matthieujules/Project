@@ -5,10 +5,10 @@ from backend.config.settings import settings
 logger = get_logger(__name__)
 
 
-async def call(prompt: str) -> tuple[str, dict]:
+async def call(prompt: str) -> str:
     """Vladimir Putin persona responding to prompts about peace and conflict.
     
-    Returns: (reply, usage_dict)
+    Returns: reply
     """
     try:
         messages = [
@@ -27,13 +27,13 @@ async def call(prompt: str) -> tuple[str, dict]:
             }
         ]
         
-        reply, usage = await chat(
+        reply, _ = await chat(
             model=settings.persona_model,
             messages=messages,
             temperature=0.7
         )
         
-        return reply, usage
+        return reply
     except PolicyError as e:
         logger.warning(f"Policy violation in persona: {e}")
         raise  # Bubble up as per spec

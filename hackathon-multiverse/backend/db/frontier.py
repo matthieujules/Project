@@ -16,3 +16,9 @@ def pop_max() -> str | None:
 def size() -> int:
     """Return current number of items in the frontier sorted-set."""
     return int(r.zcard(FRONTIER_KEY))
+
+
+def pop_batch(count: int) -> list[str]:
+    """Pop up to count highest priority nodes from the frontier."""
+    result = r.zpopmax(FRONTIER_KEY, count)
+    return [node_id for node_id, priority in result]

@@ -52,8 +52,12 @@ The backend provides a simple REST + WebSocket API:
 python scripts/e2e_demo.py
 ```
 
-**100-node exploration with comprehensive monitoring:**
+**100-node PARALLEL exploration with blazing speed:**
 ```bash
+# Use the new parallel worker:
+python -m backend.worker.parallel_worker
+
+# In another terminal:
 python scripts/long_run_demo.py
 ```
 

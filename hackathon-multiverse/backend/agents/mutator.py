@@ -28,7 +28,7 @@ async def variants(base_prompt: str, k: int) -> List[str]:
         ]
         
         # Use n parameter to get k variations in one call
-        replies, usage = await chat(
+        replies, _ = await chat(
             model=settings.mutator_model,
             messages=messages,
             temperature=0.9,  # Higher temperature for more creativity
@@ -41,7 +41,7 @@ async def variants(base_prompt: str, k: int) -> List[str]:
         else:
             variant_list = replies
         
-        return variant_list, usage
+        return variant_list
         
     except PolicyError as e:
         logger.warning(f"Policy violation in mutator: {e}")

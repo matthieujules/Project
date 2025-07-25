@@ -6,10 +6,10 @@ from backend.config.settings import settings
 logger = get_logger(__name__)
 
 
-async def score(prompt: str, reply: str) -> tuple[float, dict]:
+async def score(prompt: str, reply: str) -> float:
     """Score the quality of a prompt-reply pair for peace/conflict dialogue.
     
-    Returns: (score, usage_dict)
+    Returns: score
     """
     try:
         messages = [
@@ -52,7 +52,7 @@ async def score(prompt: str, reply: str) -> tuple[float, dict]:
             }
         }]
         
-        reply_json, usage = await chat(
+        reply_json, _ = await chat(
             model=settings.critic_model,
             messages=messages,
             temperature=0.0,  # Deterministic scoring
@@ -63,7 +63,7 @@ async def score(prompt: str, reply: str) -> tuple[float, dict]:
         result = json.loads(reply_json)
         score_value = float(result["score"])
         
-        return score_value, usage
+        return score_value
         
     except PolicyError as e:
         logger.warning(f"Policy violation in critic: {e}")
