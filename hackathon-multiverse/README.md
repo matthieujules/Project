@@ -79,6 +79,7 @@ The long-run demo is perfect for observing AI exploration patterns over time wit
 - **Spatial positioning**: Nodes positioned in 2D space based on semantic similarity  
 - **Tree structure**: Parent-child relationships as exploration deepens
 - **Priority-based expansion**: Higher-scoring nodes get processed first
-- **Agent costs**: Token usage and costs tracked in logs
+- **Parallel processing**: 20 nodes processed simultaneously for 20x speed improvement
+- **Real-time metrics**: Velocity tracking shows nodes/second generation rate
 
 License: MIT

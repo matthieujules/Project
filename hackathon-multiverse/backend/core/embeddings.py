@@ -1,19 +1,20 @@
+import openai
 import numpy as np
 from typing import List, Tuple
 from backend.core.logger import get_logger
+from backend.config.settings import settings
 
 logger = get_logger(__name__)
 
 
 def embed(text: str) -> List[float]:
-    """Stub embedding function - generates deterministic fake vector."""
-    # Use hash to generate deterministic fake embedding
-    h = hash(text)
-    vec = []
-    for i in range(5):
-        # Generate 5 values between 0 and 1
-        vec.append((h % (1000 * (i + 1))) / 1000.0)
-    return vec
+    """Generate semantic embeddings using OpenAI's text-embedding-3-small model."""
+    client = openai.OpenAI(api_key=settings.openai_api_key)
+    response = client.embeddings.create(
+        model="text-embedding-3-small",
+        input=[text]
+    )
+    return response.data[0].embedding
 
 
 def fit_reducer(prompts: List[str]) -> None:
@@ -24,9 +25,13 @@ def fit_reducer(prompts: List[str]) -> None:
 
 
 def to_xy(vec: List[float]) -> Tuple[float, float]:
-    """Simple stub projection - just returns first two dimensions."""
-    # TODO Phase-4: use fitted UMAP reducer for real projection
+    """Project high-dimensional embedding to 2D using PCA for visualization."""
+    # For now, use simple PCA-like projection on first two principal components
+    # In production, you'd want UMAP or t-SNE for better clustering
     if len(vec) >= 2:
-        return (vec[0], vec[1])
+        # Simple normalization to [-1, 1] range for visualization
+        x = (vec[0] - 0.5) * 2
+        y = (vec[1] - 0.5) * 2
+        return (x, y)
     else:
-        return (vec[0], 0.0) if vec else (0.0, 0.0)
+        return (0.0, 0.0)

@@ -1,31 +1,53 @@
-from typing import List
+from typing import List, Dict
 from backend.llm.openai_client import chat, PolicyError
 from backend.core.logger import get_logger
 from backend.config.settings import settings
+from backend.core.conversation import format_conversation_for_display
 
 logger = get_logger(__name__)
 
 
-async def variants(base_prompt: str, k: int) -> List[str]:
-    """Generate k variations of the prompt exploring different angles.
+async def variants(conversation_history: List[Dict[str, str]], k: int) -> List[str]:
+    """Generate k strategic variations based on full conversation context.
     
     Returns: list_of_variants
     """
     try:
-        messages = [
-            {
-                "role": "system",
-                "content": (
-                    "You are a creative prompt engineer. Given a prompt about peace or conflict, "
-                    "generate ONE meaningful variation that explores a different perspective, "
-                    "framing, or aspect while staying on topic."
-                )
-            },
-            {
-                "role": "user",
-                "content": f"Create a variation of this prompt:\n\n{base_prompt}"
-            }
-        ]
+        # Handle empty conversation (root node case)
+        if not conversation_history:
+            messages = [
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a strategic conversation designer. Generate initial prompts "
+                        "that could start a dialogue with Putin about peace and conflict resolution. "
+                        "Focus on approaches that might engage him constructively rather than defensively."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": "Generate a thoughtful opening message to begin a dialogue with Putin about peace:"
+                }
+            ]
+        else:
+            # Format conversation for LLM
+            conversation_text = format_conversation_for_display(conversation_history)
+            
+            messages = [
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a strategic conversation designer. Given this dialogue with Putin, "
+                        "generate the next user message that will move him closer to accepting peace negotiations. "
+                        "Build on what he just said - if he shows openness, exploit it. If he shows resistance, address it strategically. "
+                        "Focus on finding common ground and incremental progress toward reconciliation."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": f"Current conversation:\n\n{conversation_text}\n\nGenerate the next strategic message to move Putin toward reconciliation:"
+                }
+            ]
         
         # Use n parameter to get k variations in one call
         replies, _ = await chat(

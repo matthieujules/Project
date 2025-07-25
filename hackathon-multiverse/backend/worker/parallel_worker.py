@@ -10,6 +10,7 @@ from backend.core.schemas import Node, GraphUpdate
 from backend.core.utils import uuid_str
 from backend.core.logger import get_logger
 from backend.core.embeddings import embed, to_xy
+from backend.core.conversation import get_conversation_path, format_dialogue_history
 from backend.orchestrator.scheduler import calculate_priority, get_top_k_nodes
 
 logger = get_logger(__name__)
@@ -17,14 +18,22 @@ logger = get_logger(__name__)
 BATCH_SIZE = 20  # Process 20 nodes simultaneously
 
 
-async def process_variant(variant_prompt: str, parent: Node, top_k_embeddings: List[List[float]]) -> Node:
+async def process_variant(variant_prompt: str, parent: Node, parent_conversation: List[dict], top_k_embeddings: List[List[float]]) -> Node:
     """Process a single variant: persona → critic → scheduler → save."""
     child_id = uuid_str()
     
     try:
-        # Persona and critic in parallel would be ideal, but they're sequential
+        # Get persona response to the variant
         reply = await call(variant_prompt)
-        variant_score = await score(variant_prompt, reply)
+        
+        # Build full conversation including this new exchange
+        full_conversation = parent_conversation + [
+            {"role": "user", "content": variant_prompt},
+            {"role": "assistant", "content": reply}
+        ]
+        
+        # Score the entire conversation trajectory
+        variant_score = await score(full_conversation)
         
         # Generate embedding and 2D projection
         emb = embed(variant_prompt)
@@ -58,7 +67,14 @@ async def process_variant(variant_prompt: str, parent: Node, top_k_embeddings: L
         r = get_redis()
         r.publish("graph_updates", graph_update.model_dump_json())
         
-        logger.info(f"  ✅ {child_id[:8]}... score={variant_score:.3f} priority={priority:.3f} xy=({xy[0]:.2f},{xy[1]:.2f})")
+        # Enhanced logging to show conversation-aware changes
+        conv_turns = len(full_conversation) // 2
+        prompt_preview = variant_prompt[:50] + "..." if len(variant_prompt) > 50 else variant_prompt
+        reply_preview = reply[:40] + "..." if len(reply) > 40 else reply
+        
+        logger.info(f"  ✅ {child_id[:8]}... TRAJECTORY_SCORE={variant_score:.3f} priority={priority:.3f}")
+        logger.info(f"     📝 Strategic prompt: '{prompt_preview}'")
+        logger.info(f"     🎯 Putin replied: '{reply_preview}' (after {conv_turns} turns)")
         return child
         
     except Exception as e:
@@ -78,13 +94,25 @@ async def process_node(parent_id: str, top_k_embeddings: List[List[float]]) -> L
     logger.info(f"🔄 Processing {parent_id[:8]}... depth={parent.depth} prompt='{parent.prompt[:40]}{'...' if len(parent.prompt) > 40 else ''}'")
     
     try:
-        # Generate 3 variants
-        variant_list = await variants(parent.prompt, k=3)
-        logger.info(f"  🧬 Generated {len(variant_list)} variants")
+        # Get full conversation path up to this parent
+        conversation_path = get_conversation_path(parent_id)
+        parent_conversation = format_dialogue_history(conversation_path)
+        
+        # Log conversation context
+        conv_turns = len(parent_conversation) // 2
+        if parent_conversation:
+            last_reply = parent_conversation[-1]["content"][:60] + "..." if len(parent_conversation[-1]["content"]) > 60 else parent_conversation[-1]["content"]
+            logger.info(f"  📚 Conversation context: {conv_turns} turns, last reply: '{last_reply}'")
+        else:
+            logger.info(f"  📚 Root node - no conversation context")
+        
+        # Generate 3 strategic variants based on full conversation
+        variant_list = await variants(parent_conversation, k=3)
+        logger.info(f"  🧬 Generated {len(variant_list)} strategic variants")
         
         # Process all 3 variants in parallel
         variant_tasks = [
-            process_variant(variant_prompt, parent, top_k_embeddings)
+            process_variant(variant_prompt, parent, parent_conversation, top_k_embeddings)
             for variant_prompt in variant_list
         ]
         

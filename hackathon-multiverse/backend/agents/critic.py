@@ -1,29 +1,49 @@
 import json
+from typing import List, Dict
 from backend.llm.openai_client import chat, PolicyError
 from backend.core.logger import get_logger
 from backend.config.settings import settings
+from backend.core.conversation import format_conversation_for_display
 
 logger = get_logger(__name__)
 
 
-async def score(prompt: str, reply: str) -> float:
-    """Score the quality of a prompt-reply pair for peace/conflict dialogue.
+async def score(conversation_history: List[Dict[str, str]]) -> float:
+    """Score the entire conversation trajectory toward reconciliation goal.
     
     Returns: score
     """
     try:
+        # Format conversation for LLM
+        conversation_text = format_conversation_for_display(conversation_history)
+        
+        # Handle initial exchanges vs multi-turn conversations
+        if len(conversation_history) <= 2:
+            system_content = (
+                "You are a negotiation progress evaluator. Score this initial exchange with Putin "
+                "based on how receptive or hostile his response is to peace dialogue. "
+                "Look for: openness to discussion, defensive reactions, constructive engagement, or outright hostility. "
+                "Rate 0.0 (completely hostile) to 1.0 (very receptive to peace talks)."
+            )
+            user_content = f"Initial exchange to evaluate:\n\n{conversation_text}\n\nScore Putin's receptiveness to peace dialogue:"
+        else:
+            system_content = (
+                "You are a negotiation progress evaluator. Score this ENTIRE conversation "
+                "based on how much Putin has moved from initial hostility toward accepting "
+                "peace negotiations. Look for: softening of positions, acknowledgment of common ground, "
+                "willingness to engage constructively, and openness to compromise. "
+                "Rate 0.0 (hostile/regressive) to 1.0 (ready for peace talks)."
+            )
+            user_content = f"Full conversation to evaluate:\n\n{conversation_text}\n\nScore Putin's trajectory toward reconciliation:"
+        
         messages = [
             {
                 "role": "system",
-                "content": (
-                    "You are a dialogue quality critic. Score the following prompt-reply pair "
-                    "based on: depth of insight, constructiveness, nuance, and potential to lead "
-                    "to meaningful dialogue about peace and conflict."
-                )
+                "content": system_content
             },
             {
                 "role": "user",
-                "content": f"Prompt: {prompt}\n\nReply: {reply}"
+                "content": user_content
             }
         ]
         
