@@ -1,4 +1,5 @@
 import json
+from typing import List
 from backend.core.schemas import Node
 from backend.db.redis_client import get_redis
 
@@ -39,3 +40,23 @@ def get(node_id: str) -> Node | None:
             data[key] = float(data[key])
 
     return Node(**data)
+
+
+def get_all_nodes() -> List[Node]:
+    """Get all nodes from Redis."""
+    node_keys = r.keys(NODE_PREFIX + "*")
+    nodes = []
+    
+    for key in node_keys:
+        # Handle both bytes and string keys
+        if isinstance(key, bytes):
+            key_str = key.decode('utf-8')
+        else:
+            key_str = str(key)
+            
+        node_id = key_str.replace(NODE_PREFIX, "")
+        node = get(node_id)
+        if node:
+            nodes.append(node)
+    
+    return nodes

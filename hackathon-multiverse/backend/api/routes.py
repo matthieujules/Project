@@ -7,7 +7,7 @@ from backend.db.redis_client import get_redis
 from backend.db.node_store import get, save
 from backend.db.frontier import push
 from backend.core.utils import uuid_str
-from backend.core.embeddings import embed, to_xy
+from backend.core.embeddings import embed, to_xy, fit_reducer
 from backend.core.conversation import get_conversation_path, format_dialogue_history
 
 logger = get_logger(__name__)

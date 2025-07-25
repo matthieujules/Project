@@ -9,7 +9,7 @@ from backend.agents.critic import score
 from backend.core.schemas import Node, GraphUpdate
 from backend.core.utils import uuid_str
 from backend.core.logger import get_logger
-from backend.core.embeddings import embed, to_xy
+from backend.core.embeddings import embed, to_xy, refit_reducer_if_needed
 from backend.core.conversation import get_conversation_path, format_dialogue_history
 from backend.orchestrator.scheduler import calculate_priority, get_top_k_nodes
 
@@ -159,6 +159,10 @@ async def process_batch(node_ids: List[str]) -> int:
             total_children += len(result)
     
     logger.info(f"🎉 Batch complete: {len(node_ids)} nodes → {total_children} children, frontier={frontier_size()}")
+    
+    # Refit UMAP reducer if we have enough new data
+    refit_reducer_if_needed()
+    
     return total_children
 
 
