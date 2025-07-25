@@ -1,70 +1,24 @@
-version: '3.8'
-
+version: "3.9"
 services:
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
-  test:
-    build:
-      context: .
-      dockerfile_inline: |
-        FROM python:3.11-slim
-        WORKDIR /app
-        COPY requirements.txt .
-        RUN pip install --no-cache-dir -r requirements.txt
-        COPY . .
-        CMD ["pytest", "-q"]
-    volumes:
-      - .:/app
-    depends_on:
-      redis:
-        condition: service_healthy
-    environment:
-      - REDIS_URL=redis://redis:6379/0
-
-  worker:
-    build:
-      context: .
-      dockerfile_inline: |
-        FROM python:3.11-slim
-        WORKDIR /app
-        COPY requirements.txt .
-        RUN pip install --no-cache-dir -r requirements.txt
-        COPY . .
-        CMD ["python", "-m", "backend.worker.worker"]
-    volumes:
-      - .:/app
-    depends_on:
-      redis:
-        condition: service_healthy
-    environment:
-      - REDIS_URL=redis://redis:6379/0
-      - PYTHONPATH=/app
+    ports: ["6379:6379"]
 
   api:
-    build:
-      context: .
-      dockerfile_inline: |
-        FROM python:3.11-slim
-        WORKDIR /app
-        COPY requirements.txt .
-        RUN pip install --no-cache-dir -r requirements.txt
-        COPY . .
-        CMD ["uvicorn", "backend.api.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
-    ports:
-      - "8000:8000"
-    volumes:
-      - .:/app
-    depends_on:
-      redis:
-        condition: service_healthy
+    build: .
+    command: ["uvicorn", "backend.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    volumes: [".:/app"]
     environment:
       - REDIS_URL=redis://redis:6379/0
-      - PYTHONPATH=/app
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on: [redis]
+    ports: ["8000:8000"]
+
+  worker:
+    build: .
+    command: ["python", "-m", "backend.worker.worker"]
+    volumes: [".:/app"]
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on: [redis]

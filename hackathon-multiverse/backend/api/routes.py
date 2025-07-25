@@ -1,8 +1,13 @@
-from fastapi import APIRouter, HTTPException
-from backend.core.schemas import FocusZone, SettingsUpdate
+from fastapi import APIRouter, HTTPException, Body
+from backend.core.schemas import FocusZone, SettingsUpdate, Node
 from backend.orchestrator.scheduler import boost_or_seed
 from backend.config.settings import settings
 from backend.core.logger import get_logger
+from backend.db.redis_client import get_redis
+from backend.db.node_store import get, save
+from backend.db.frontier import push
+from backend.core.utils import uuid_str
+from backend.core.embeddings import embed, to_xy
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -60,3 +65,42 @@ async def get_settings():
         "redis_url": settings.redis_url,
         "log_level": settings.log_level,
     }
+
+
+@router.get("/graph")
+async def get_graph():
+    """
+    Dump all nodes (id, xy, score, parent) – UI calls once on load.
+    """
+    r = get_redis()
+    nodes = []
+    for key in r.keys("node:*"):
+        node = get(key.replace("node:", ""))
+        if node:
+            nodes.append(
+                {
+                    "id": node.id,
+                    "xy": node.xy,
+                    "score": node.score,
+                    "parent": node.parent,
+                }
+            )
+    return nodes
+
+
+@router.post("/seed")
+async def seed(prompt: str = Body(..., embed=True)):
+    """
+    Push a first prompt onto the frontier. UI can expose a "Start" button.
+    """
+    node = Node(
+        id=uuid_str(),
+        prompt=prompt,
+        depth=0,
+        score=0.5,
+        emb=embed(prompt),
+        xy=list(to_xy(embed(prompt))),
+    )
+    save(node)
+    push(node.id, 1.0)
+    return {"seed_id": node.id}
