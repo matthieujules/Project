@@ -6,10 +6,10 @@ from backend.config.settings import settings
 logger = get_logger(__name__)
 
 
-async def variants(base_prompt: str, k: int) -> tuple[List[str], dict]:
+async def variants(base_prompt: str, k: int) -> List[str]:
     """Generate k variations of the prompt exploring different angles.
     
-    Returns: (list_of_variants, usage_dict)
+    Returns: list_of_variants
     """
     try:
         messages = [

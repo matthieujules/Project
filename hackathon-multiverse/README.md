@@ -47,19 +47,27 @@ The backend provides a simple REST + WebSocket API:
 
 ## Demo & Testing
 
-**Run end-to-end demo:**
+**Quick demo (3 nodes):**
 ```bash
 python scripts/e2e_demo.py
 ```
 
-This seeds a node, listens for WebSocket updates, and snapshots the final graph. Perfect for demonstrating the live exploration process.
+**100-node exploration with comprehensive monitoring:**
+```bash
+python scripts/long_run_demo.py
+```
+
+**Analyze exploration patterns:**
+```bash
+python scripts/exploration_analyzer.py
+```
 
 **Run integration test:**
 ```bash
 pytest tests/test_roundtrip.py -v
 ```
 
-Verifies the complete API → Worker → WebSocket flow works correctly.
+The long-run demo is perfect for observing AI exploration patterns over time with detailed agent logs and statistics.
 
 ## What You'll Observe
 
