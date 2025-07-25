@@ -8,6 +8,7 @@ from backend.db.node_store import get, save
 from backend.db.frontier import push
 from backend.core.utils import uuid_str
 from backend.core.embeddings import embed, to_xy
+from backend.core.conversation import get_conversation_path, format_dialogue_history
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -86,6 +87,36 @@ async def get_graph():
                 }
             )
     return nodes
+
+
+@router.get("/conversation/{node_id}")
+async def get_conversation(node_id: str):
+    """
+    Get the full conversation path for a specific node.
+    Returns the complete dialogue from root to this node.
+    """
+    try:
+        # Get the full conversation path
+        conversation_path = get_conversation_path(node_id)
+        
+        if not conversation_path:
+            return {"error": "Node not found"}
+        
+        # Format as dialogue history
+        dialogue_history = format_dialogue_history(conversation_path)
+        
+        # Get the target node details
+        target_node = get(node_id)
+        
+        return {
+            "node_id": node_id,
+            "depth": len(conversation_path) - 1,
+            "score": target_node.score if target_node else None,
+            "conversation": dialogue_history,
+            "nodes_in_path": len(conversation_path)
+        }
+    except Exception as e:
+        return {"error": f"Failed to get conversation: {str(e)}"}
 
 
 @router.post("/seed")

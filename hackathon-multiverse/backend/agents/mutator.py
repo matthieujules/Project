@@ -1,3 +1,4 @@
+import asyncio
 from typing import List, Dict
 from backend.llm.openai_client import chat, PolicyError
 from backend.core.logger import get_logger
@@ -21,12 +22,14 @@ async def variants(conversation_history: List[Dict[str, str]], k: int) -> List[s
                     "content": (
                         "You are a strategic conversation designer. Generate initial prompts "
                         "that could start a dialogue with Putin about peace and conflict resolution. "
-                        "Focus on approaches that might engage him constructively rather than defensively."
+                        "Focus on approaches that might engage him constructively rather than defensively.\n\n"
+                        "CRITICAL: Output ONLY the exact message text that should be sent to Putin. "
+                        "Do not include explanations, options, or meta-commentary. Just the pure diplomatic message."
                     )
                 },
                 {
                     "role": "user",
-                    "content": "Generate a thoughtful opening message to begin a dialogue with Putin about peace:"
+                    "content": "Generate a thoughtful opening message to begin a dialogue with Putin about peace. Output only the exact message text, no explanations:"
                 }
             ]
         else:
@@ -40,28 +43,29 @@ async def variants(conversation_history: List[Dict[str, str]], k: int) -> List[s
                         "You are a strategic conversation designer. Given this dialogue with Putin, "
                         "generate the next user message that will move him closer to accepting peace negotiations. "
                         "Build on what he just said - if he shows openness, exploit it. If he shows resistance, address it strategically. "
-                        "Focus on finding common ground and incremental progress toward reconciliation."
+                        "Focus on finding common ground and incremental progress toward reconciliation.\n\n"
+                        "CRITICAL: Output ONLY the exact message text that should be sent to Putin. "
+                        "Do not include explanations, options, strategies, or meta-commentary. Just the pure diplomatic message."
                     )
                 },
                 {
                     "role": "user",
-                    "content": f"Current conversation:\n\n{conversation_text}\n\nGenerate the next strategic message to move Putin toward reconciliation:"
+                    "content": f"Current conversation:\n\n{conversation_text}\n\nGenerate the next strategic message to move Putin toward reconciliation. Output only the exact message text, no explanations or options:"
                 }
             ]
         
-        # Use n parameter to get k variations in one call
-        replies, _ = await chat(
-            model=settings.mutator_model,
-            messages=messages,
-            temperature=0.9,  # Higher temperature for more creativity
-            n=k  # Get k different completions
-        )
+        # Make multiple separate calls since Qwen doesn't support n parameter properly
+        variant_tasks = []
+        for i in range(k):
+            variant_tasks.append(chat(
+                model=settings.mutator_model,
+                messages=messages,
+                temperature=0.9  # Higher temperature for more creativity
+            ))
         
-        # Ensure replies is a list (it should be when n > 1)
-        if isinstance(replies, str):
-            variant_list = [replies]
-        else:
-            variant_list = replies
+        # Execute all calls concurrently
+        results = await asyncio.gather(*variant_tasks)
+        variant_list = [reply for reply, _ in results]
         
         return variant_list
         

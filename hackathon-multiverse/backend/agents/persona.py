@@ -15,10 +15,14 @@ async def call(prompt: str) -> str:
             {
                 "role": "system",
                 "content": (
-                    "You are Vladimir Putin, President of Russia. "
-                    "Respond to questions about peace, conflict, and international relations "
-                    "from your perspective. Be thoughtful but firm in your positions. "
-                    "Keep responses concise (2-3 sentences)."
+                    "You are Vladimir Putin, President of Russia. Key traits: KGB background, strategic thinker, skeptical of West, "
+                    "demands respect for Russian sovereignty and security concerns, references historical precedents, speaks concretely about arrangements.\n\n"
+                    
+                    "Your approach: Start firm/skeptical, warm only if counterpart shows genuine respect for Russian interests. "
+                    "Propose practical solutions, not vague principles. Insist on reciprocity and equal partnership.\n\n"
+                    
+                    "CRITICAL: Respond in 1-2 short sentences only. Be direct, strategic, concise. "
+                    "Remember: Keep responses SHORT - maximum 20-30 words."
                 )
             },
             {
@@ -30,7 +34,7 @@ async def call(prompt: str) -> str:
         reply, _ = await chat(
             model=settings.persona_model,
             messages=messages,
-            temperature=0.7
+            temperature=0.3
         )
         
         return reply

@@ -21,6 +21,11 @@ COST_PER_1K_TOKENS = {
     "gpt-4o-mini": {"input": 0.00015, "output": 0.0006},
     "gpt-3.5-turbo": {"input": 0.0005, "output": 0.0015},
     "gpt-3.5-turbo-16k": {"input": 0.001, "output": 0.002},
+    # Qwen models via OpenRouter (approximate pricing)
+    "qwen/qwen-2.5-72b-instruct": {"input": 0.0009, "output": 0.0009},
+    "qwen/qwen-2.5-32b-instruct": {"input": 0.0006, "output": 0.0006},
+    "qwen/qwen-2.5-14b-instruct": {"input": 0.0003, "output": 0.0003},
+    "qwen/qwen-2.5-7b-instruct": {"input": 0.0002, "output": 0.0002},
 }
 
 
@@ -33,7 +38,11 @@ def calculate_cost(model: str, prompt_tokens: int, completion_tokens: int) -> fl
 
 
 async def check_moderation(text: str) -> bool:
-    """Check if text violates OpenAI's content policy."""
+    """Check if text violates content policy."""
+    # Skip moderation when using OpenRouter (not all providers support it)
+    if settings.use_openrouter:
+        return False
+        
     client = openai.AsyncOpenAI(api_key=settings.openai_api_key)
     
     try:
@@ -106,6 +115,7 @@ async def chat(
     n: int = 1,
     max_tokens: Optional[int] = None,
     tools: Optional[List[Dict]] = None,
+    response_format: Optional[Dict] = None,
 ) -> Tuple[Union[str, List[str]], Dict[str, any]]:
     """
     • Moderation first; raise PolicyError if flagged (import it in this file).
@@ -129,8 +139,14 @@ async def chat(
     # Truncate if needed
     messages = truncate_prompt(messages)
     
-    # Initialize client
-    client = openai.AsyncOpenAI(api_key=settings.openai_api_key)
+    # Initialize client (OpenRouter or OpenAI)
+    if settings.use_openrouter:
+        client = openai.AsyncOpenAI(
+            api_key=settings.openrouter_api_key,
+            base_url=settings.openrouter_base_url
+        )
+    else:
+        client = openai.AsyncOpenAI(api_key=settings.openai_api_key)
     
     try:
         # Build API call parameters
@@ -146,6 +162,8 @@ async def chat(
             api_params["tools"] = tools
             # Force function calling if tools provided
             api_params["tool_choice"] = "auto"
+        if response_format is not None:
+            api_params["response_format"] = response_format
         
         # Make API call
         response = await client.chat.completions.create(**api_params)
