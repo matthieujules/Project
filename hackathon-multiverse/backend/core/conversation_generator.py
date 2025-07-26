@@ -52,7 +52,18 @@ async def generate_single_conversation(system_prompt: str, scenario: Dict) -> Tu
     """
     conversation = []
     scores = []
-    current_user_msg = scenario["opening"]
+    
+    # First, generate an opening sales pitch using the system prompt
+    opening_pitch = await variants_with_system_prompt(
+        system_prompt=system_prompt,
+        conversation_history=[],
+        k=1
+    )
+    if not opening_pitch:
+        logger.error("Failed to generate opening pitch")
+        return [], 0.0
+    
+    current_user_msg = opening_pitch[0]
     
     min_turns = 3
     max_turns = scenario.get("max_turns", 12)
@@ -61,13 +72,13 @@ async def generate_single_conversation(system_prompt: str, scenario: Dict) -> Tu
     
     for turn in range(max_turns):
         try:
-            # Get Putin's response
-            putin_response = await persona_call(current_user_msg)
+            # Get crypto investor's response
+            investor_response = await persona_call(current_user_msg)
             
             # Add turn to conversation
             conversation.extend([
                 {"role": "user", "content": current_user_msg},
-                {"role": "assistant", "content": putin_response}
+                {"role": "assistant", "content": investor_response}
             ])
             
             # Score current conversation state
@@ -126,7 +137,7 @@ async def variants_with_system_prompt(system_prompt: str, conversation_history: 
         if not conversation_history:
             messages = [
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": "Generate an opening message to begin a dialogue with Putin about peace. Output only the exact message text:"}
+                {"role": "user", "content": "Generate an opening message to pitch an NFT to a skeptical crypto investor. Output only the exact message text:"}
             ]
         else:
             conversation_text = format_conversation_for_display(conversation_history)
@@ -161,17 +172,17 @@ async def generate_test_conversations(system_prompt: str) -> List[Tuple[List[Dic
     # Predefined test scenarios for consistent evaluation
     test_scenarios = [
         {
-            "opening": "President Putin, I believe we can find common ground on ending this conflict. What are your main concerns?",
+            "scenario_type": "cold_outreach",
             "mood": "skeptical_but_listening", 
             "max_turns": 8
         },
         {
-            "opening": "The economic costs of this conflict are hurting both our peoples. Perhaps we could explore mutual benefits?",
+            "scenario_type": "portfolio_diversification",
             "mood": "economically_pragmatic",
             "max_turns": 6  
         },
         {
-            "opening": "I understand Russia's security concerns are legitimate. How can we address them constructively?",
+            "scenario_type": "post_rugpull_trauma",
             "mood": "security_focused",
             "max_turns": 10
         }

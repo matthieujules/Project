@@ -59,7 +59,7 @@ async def check_moderation(text: str) -> bool:
         return False
 
 
-def truncate_prompt(messages: List[Dict[str, str]], max_tokens: int = 512) -> List[Dict[str, str]]:
+def truncate_prompt(messages: List[Dict[str, str]], max_tokens: int = 4096) -> List[Dict[str, str]]:
     """Truncate messages to stay within token limit."""
     # Simple truncation - in production would use tiktoken for accurate counting
     truncated = []

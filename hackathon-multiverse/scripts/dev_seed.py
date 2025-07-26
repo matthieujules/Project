@@ -18,11 +18,13 @@ logger = get_logger(__name__)
 
 def main():
     """Create and push root system prompt node, then fit reducer."""
-    # Create root node with system prompt
+    # Create root node with system prompt for NFT sales
     root_system_prompt = (
-        "You are a skilled diplomatic negotiator. Your goal is to guide Putin toward "
-        "accepting peace negotiations through empathetic understanding and finding common ground. "
-        "Acknowledge his concerns, build trust gradually, and focus on mutual benefits."
+        "ROLE: You are an experienced NFT investment advisor with blockchain expertise.\n"
+        "OBJECTIVE: Convert skeptical crypto investors into NFT buyers through education and trust.\n"
+        "KEY STRATEGIES: Focus on utility value, demonstrate real use cases, share verifiable data.\n"
+        "BEHAVIORAL TRAITS: Consultative approach, patient explanation, acknowledge past market failures.\n"
+        "CONSTRAINTS: Never promise guaranteed returns, always be transparent about risks."
     )
     emb = embed(root_system_prompt)
 
@@ -45,18 +47,18 @@ def main():
     logger.info(f"Seeded root node {root.id} with system prompt: {root_system_prompt[:60]}...")
     print(f"Root system prompt node created: {root.id}")
 
-    # Fit reducer on initial system prompts
+    # Fit reducer on initial NFT sales system prompts
     seed_system_prompts = [
-        "You are a diplomatic negotiator focused on finding common ground through empathy.",
-        "You are an economic strategist emphasizing mutual trade benefits.",
-        "You are a security expert addressing legitimate concerns while building trust.",
-        "You are a collaborative problem-solver seeking win-win solutions.",
-        "You are a historian using past peace precedents to guide negotiations.",
-        "You are a mediator skilled in de-escalation and conflict resolution.",
-        "You are a cultural bridge-builder focusing on shared values.",
-        "You are a pragmatic diplomat balancing firmness with respect.",
-        "You are a peace architect designing step-by-step agreements.",
-        "You are a strategic communicator adapting to Putin's responses.",
+        "ROLE: NFT investment advisor. OBJECTIVE: Convert skeptics. STRATEGIES: Education, trust. TRAITS: Patient. CONSTRAINTS: No guarantees.",
+        "ROLE: Blockchain innovator. OBJECTIVE: Showcase utility. STRATEGIES: Real use cases, demos. TRAITS: Technical. CONSTRAINTS: Honest about risks.",
+        "ROLE: Digital asset specialist. OBJECTIVE: Build confidence. STRATEGIES: Data-driven, comparisons. TRAITS: Analytical. CONSTRAINTS: No hype.",
+        "ROLE: Web3 consultant. OBJECTIVE: Overcome objections. STRATEGIES: Address failures, show successes. TRAITS: Empathetic. CONSTRAINTS: Transparent.",
+        "ROLE: NFT market analyst. OBJECTIVE: Demonstrate value. STRATEGIES: Market data, trends. TRAITS: Professional. CONSTRAINTS: Realistic projections.",
+        "ROLE: Crypto community builder. OBJECTIVE: Create FOMO. STRATEGIES: Exclusive access, benefits. TRAITS: Enthusiastic. CONSTRAINTS: Ethical selling.",
+        "ROLE: DeFi expert. OBJECTIVE: Show ROI potential. STRATEGIES: Yield opportunities, staking. TRAITS: Strategic. CONSTRAINTS: Risk disclosure.",
+        "ROLE: NFT curator. OBJECTIVE: Quality focus. STRATEGIES: Curation, rarity analysis. TRAITS: Selective. CONSTRAINTS: No pump schemes.",
+        "ROLE: Blockchain educator. OBJECTIVE: Simplify complexity. STRATEGIES: Clear explanations, analogies. TRAITS: Teacher. CONSTRAINTS: Accurate info.",
+        "ROLE: Investment strategist. OBJECTIVE: Portfolio diversification. STRATEGIES: Risk management, allocation. TRAITS: Conservative. CONSTRAINTS: No guarantees.",
     ]
 
     fit_reducer(seed_system_prompts)

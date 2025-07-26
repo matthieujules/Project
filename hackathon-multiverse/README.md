@@ -1,6 +1,6 @@
-# Hackathon Multiverse - System Prompt Optimization
+# Hackathon Multiverse - NFT Sales Strategy Evolution
 
-AI-powered system prompt optimization framework using evolutionary algorithms and multi-agent orchestration. The system evolves optimal instructions (system prompts) for LLM agents to achieve specific goals.
+AI-powered system prompt optimization framework using evolutionary algorithms to discover optimal NFT sales strategies. The system evolves instructions for sales agents to convert skeptical crypto investors into buyers.
 
 ## Complete System Startup Guide
 
@@ -31,7 +31,7 @@ uvicorn backend.api.main:app --host 0.0.0.0 --port 8000
 
 ```bash
 cd /Users/matthieuhuss/AdventureX-Final/hackathon-multiverse
-python frontend/server.py
+python3 frontend/server.py
 # Visit http://localhost:3000 to see the visualization
 ```
 
@@ -41,12 +41,12 @@ python frontend/server.py
 cd /Users/matthieuhuss/AdventureX-Final/hackathon-multiverse
 source .venv/bin/activate
 
-# Clear any old data and seed system prompts
+# Clear any old data and seed NFT sales system prompts
 redis-cli flushall
-python scripts/dev_seed.py  # Seeds initial system prompts
+python3 scripts/dev_seed.py  # Seeds initial NFT sales system prompts
 
-# Start the parallel worker (evolves system prompts)
-python -m backend.worker.parallel_worker
+# Start the parallel worker (evolves NFT sales strategies)
+python3 -m backend.worker.parallel_worker
 ```
 
 **Terminal 5: (Optional) Live Terminal Monitor**
@@ -54,7 +54,7 @@ python -m backend.worker.parallel_worker
 ```bash
 cd /Users/matthieuhuss/AdventureX-Final/hackathon-multiverse
 source .venv/bin/activate
-python -m visualization.live_monitor
+python3 -m visualization.live_monitor
 ```
 
 ### What You'll See
@@ -69,13 +69,14 @@ python -m visualization.live_monitor
 2. **Worker Terminal**: System prompt evolution logs like:
 
    ```
-   🔄 Processing bea8a669... depth=2 system_prompt='You are a diplomatic negotiator...'
-   📊 Parent performance: avg_score=0.600, samples=3
+   🔄 Processing bea8a669... depth=2 system_prompt='ROLE: NFT investment advisor...'
+   📊 Parent performance: avg_score=0.450, samples=3
    🧬 Generated 3 system prompt variants
    📝 Testing system prompt across 3 scenarios
-   ✅ Child AVG_SCORE=0.750 priority=0.694
-   📝 System prompt: 'You are an empathetic negotiator who builds trust...'
-   📊 Results: 3 conversations, 33.3% success, 4.5 avg turns
+   ✅ Child AVG_SCORE=0.650 priority=0.594
+   📝 System prompt: 'ROLE: Blockchain educator. OBJECTIVE: Build trust through education...'
+   📊 Results: 3 conversations, 25% convinced to buy, 5.2 avg turns
+   🎯 Multi-dimensional scores: Engagement=0.7, Trust=0.6, Objections=0.5, Purchase=0.4
    ```
 
 3. **Terminal Monitor**: ASCII dashboard with evolution progress and real-time stats
@@ -91,7 +92,7 @@ docker compose up --build
 **Seed a root node**
 
 ```bash
-curl -X POST localhost:8000/seed -d '{"prompt": "How can we achieve lasting peace?"}' -H "Content-Type: application/json"
+curl -X POST localhost:8000/seed -d '{"prompt": "Hey, I heard about this new NFT project. Why should I care?"}' -H "Content-Type: application/json"
 ```
 
 ## For UI Developers
@@ -114,7 +115,7 @@ The backend provides a simple REST + WebSocket API:
 **Quick demo (3 nodes):**
 
 ```bash
-python scripts/e2e_demo.py
+python3 scripts/e2e_demo.py
 ```
 
 **100-node PARALLEL exploration with blazing speed:**
@@ -122,13 +123,13 @@ python scripts/e2e_demo.py
 ```bash
 # Make sure system is running (see Complete System Startup Guide above)
 # Then run analysis script:
-python scripts/long_run_demo.py
+python3 scripts/long_run_demo.py
 ```
 
 **Analyze exploration patterns:**
 
 ```bash
-python scripts/exploration_analyzer.py
+python3 scripts/exploration_analyzer.py
 ```
 
 **Run integration test:**
@@ -159,11 +160,11 @@ The long-run demo is perfect for observing AI exploration patterns over time wit
 
 This system implements a meta-learning framework that evolves optimal instructions for LLM agents:
 
-- **System Prompt Evolution**: Discovers effective instructions through evolutionary algorithms
-- **Target Persona**: The LLM agent to influence (e.g., Putin persona)
-- **Objective Function**: Scores conversation effectiveness toward goal
+- **System Prompt Evolution**: Discovers effective NFT sales strategies through evolutionary algorithms
+- **Target Persona**: Skeptical crypto investor (28, male, $75K income, lost money in LUNA/FTX)
+- **Objective Function**: Multi-dimensional scoring of NFT purchase likelihood
 - **Plateau Detection**: Natural conversation termination when improvement plateaus
-- **Multi-Scenario Testing**: Each prompt tested across diverse conversation scenarios
+- **Multi-Scenario Testing**: Each prompt tested across diverse investor interactions
 - **Priority System**: MCTS-inspired selection balances exploitation vs exploration
 
 ### Real-Time Visualization

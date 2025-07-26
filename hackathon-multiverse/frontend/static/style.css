@@ -485,6 +485,35 @@ body {
     font-size: 14px;
 }
 
+/* Loading and Error Modals */
+.loading-message {
+    text-align: center;
+    color: #00ffff;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.loading-spinner {
+    text-align: center;
+    font-size: 24px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.error-message {
+    color: #ff6666;
+    text-align: center;
+    padding: 20px;
+    font-size: 14px;
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid #ff6666;
+    border-radius: 4px;
+}
+
 /* Node Details Modal */
 .node-details {
     font-family: 'Courier New', monospace;

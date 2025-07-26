@@ -143,66 +143,84 @@ class SystemPromptVisualizer {
         return null;
     }
     
-    showNodeDetailsModal(node) {
+    async showNodeDetailsModal(node) {
         // Remove existing modal if present
         const existingModal = document.getElementById('nodeDetailsModal');
         if (existingModal) {
             existingModal.remove();
         }
         
-        // Get evolution path
-        const evolutionPath = this.getEvolutionPath(node);
+        // Show loading modal first
+        this.showLoadingModal('nodeDetailsModal', 'Loading System Prompt Details...');
         
-        // Create modal
-        const modal = document.createElement('div');
-        modal.id = 'nodeDetailsModal';
-        modal.className = 'modal';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>System Prompt Node Details</h2>
-                    <div class="node-meta">
-                        ID: ${node.id.slice(0, 12)}... | 
-                        Score: ${(node.avg_score || node.score || 0).toFixed(3)} | 
-                        Generation: ${this.getNodeDepth(node)} |
-                        Samples: ${node.sample_count || 0} |
-                        Position: (${node.xy[0]?.toFixed(2)}, ${node.xy[1]?.toFixed(2)})
+        try {
+            // Fetch full node details including system prompt and conversation samples
+            const response = await fetch(`http://localhost:8000/system_prompt/${node.id}`);
+            const fullNodeData = await response.json();
+            
+            if (fullNodeData.error) {
+                console.error('Failed to load node details:', fullNodeData.error);
+                this.showErrorModal('nodeDetailsModal', 'Failed to load system prompt details');
+                return;
+            }
+            
+            // Remove loading modal first
+            const loadingModal = document.getElementById('nodeDetailsModal');
+            if (loadingModal) {
+                loadingModal.remove();
+            }
+            
+            // Get evolution path
+            const evolutionPath = this.getEvolutionPath(node);
+            
+            // Create modal with full data
+            const modal = document.createElement('div');
+            modal.id = 'nodeDetailsModal';
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>System Prompt Node Details</h2>
+                        <div class="node-meta">
+                            ID: ${node.id.slice(0, 12)}... | 
+                            Score: ${(fullNodeData.avg_score || fullNodeData.score || 0).toFixed(3)} | 
+                            Generation: ${fullNodeData.generation || this.getNodeDepth(node)} |
+                            Samples: ${fullNodeData.sample_count || 0} |
+                            Position: (${node.xy[0]?.toFixed(2)}, ${node.xy[1]?.toFixed(2)})
+                        </div>
+                        <span class="close">&times;</span>
                     </div>
-                    <span class="close">&times;</span>
-                </div>
-                <div class="modal-body">
-                    <div class="node-details">
-                        <div class="detail-section">
-                            <h3>System Prompt:</h3>
-                            <div class="system-prompt-text">${node.system_prompt_preview || node.system_prompt || 'No system prompt available'}</div>
-                        </div>
-                        
-                        ${node.conversation_samples && node.conversation_samples.length > 0 ? `
-                        <div class="detail-section">
-                            <h3>Sample Conversations (${node.conversation_samples.length}):</h3>
-                            <div class="conversation-samples">
-                                ${node.conversation_samples.slice(0, 2).map((sample, i) => `
-                                    <div class="sample-conversation">
-                                        <div class="sample-header">Sample ${i + 1} - Score: ${sample.score?.toFixed(3) || 'N/A'}</div>
-                                        <div class="sample-content">
-                                            ${sample.conversation ? this.formatConversationHTML(sample.conversation.slice(0, 4)) : 'No conversation data'}
-                                            ${sample.conversation && sample.conversation.length > 4 ? '<div class="conversation-truncated">... (conversation truncated)</div>' : ''}
+                    <div class="modal-body">
+                        <div class="node-details">
+                            <div class="detail-section">
+                                <h3>System Prompt:</h3>
+                                <div class="system-prompt-text">${fullNodeData.system_prompt || 'No system prompt available'}</div>
+                            </div>
+                            
+                            ${fullNodeData.conversation_samples && fullNodeData.conversation_samples.length > 0 ? `
+                            <div class="detail-section">
+                                <h3>Sample Conversations (${fullNodeData.conversation_samples.length}):</h3>
+                                <div class="conversation-samples">
+                                    ${fullNodeData.conversation_samples.map((sample, i) => `
+                                        <div class="sample-conversation">
+                                            <div class="sample-header">Sample ${i + 1} - Score: ${sample.score?.toFixed(3) || 'N/A'}</div>
+                                            <div class="sample-content">
+                                                ${sample.conversation ? this.formatConversationHTML(sample.conversation) : 'No conversation data'}
+                                            </div>
                                         </div>
-                                    </div>
-                                `).join('')}
-                                ${node.conversation_samples.length > 2 ? `<div class="more-samples">... and ${node.conversation_samples.length - 2} more samples</div>` : ''}
+                                    `).join('')}
+                                </div>
                             </div>
-                        </div>
-                        ` : '<div class="detail-section"><h3>Sample Conversations:</h3><div class="no-samples">No sample conversations available</div></div>'}
-                        
-                        ${evolutionPath.length > 1 ? `
-                        <div class="detail-section">
-                            <h3>Evolution Path (${evolutionPath.length} generations):</h3>
-                            <div class="evolution-path">
-                                ${this.renderEvolutionPath(evolutionPath)}
+                            ` : '<div class="detail-section"><h3>Sample Conversations:</h3><div class="no-samples">No sample conversations available</div></div>'}
+                            
+                            ${evolutionPath.length > 1 ? `
+                            <div class="detail-section">
+                                <h3>Evolution Path (${evolutionPath.length} generations):</h3>
+                                <div class="evolution-path">
+                                    ${this.renderEvolutionPath(evolutionPath)}
+                                </div>
                             </div>
-                        </div>
-                        ` : ''}
+                            ` : ''}
                         
                         <div class="detail-section">
                             <h3>Actions:</h3>
@@ -231,6 +249,18 @@ class SystemPromptVisualizer {
         
         // Show modal
         modal.style.display = 'block';
+        
+        } catch (error) {
+            console.error('Failed to load system prompt details:', error);
+            
+            // Remove loading modal first
+            const loadingModal = document.getElementById('nodeDetailsModal');
+            if (loadingModal) {
+                loadingModal.remove();
+            }
+            
+            this.showErrorModal('nodeDetailsModal', 'Failed to load system prompt details. Please try again.');
+        }
     }
     
     handleNodeUpdate(update) {
@@ -419,9 +449,9 @@ class SystemPromptVisualizer {
     getScoreColor(score) {
         if (score === null || score === undefined) return '#666';
         
-        if (score < 0.4) return '#ff4444'; // Red for hostile
-        if (score < 0.6) return '#ffaa44'; // Orange for neutral
-        return '#44ff44'; // Green for progress
+        if (score < 0.4) return '#ff4444'; // Red for hostile/skeptical
+        if (score < 0.6) return '#ffaa44'; // Orange for interested
+        return '#44ff44'; // Green for convinced/ready to buy
     }
     
     startRenderLoop() {
@@ -556,7 +586,7 @@ class SystemPromptVisualizer {
     formatConversationHTML(conversation) {
         return conversation.map((turn, index) => {
             const isUser = turn.role === 'user';
-            const speaker = isUser ? 'Human' : 'Putin';
+            const speaker = isUser ? 'Sales Agent' : 'Crypto Investor';
             const className = isUser ? 'user-message' : 'assistant-message';
             
             return `
@@ -603,7 +633,7 @@ class SystemPromptVisualizer {
                         <div class="conversation-samples-section">
                             <h3>Sample Conversations:</h3>
                             <div class="conversation-samples">
-                                ${node.conversation_samples.slice(0, 3).map((sample, i) => `
+                                ${node.conversation_samples.map((sample, i) => `
                                     <div class="sample-conversation">
                                         <div class="sample-header">Sample ${i + 1} (Score: ${sample.score?.toFixed(3) || 'N/A'})</div>
                                         <div class="sample-content">
@@ -809,6 +839,61 @@ class SystemPromptVisualizer {
         // This could be enhanced to highlight nodes with similar embeddings
         // For now, just show a message
         alert(`Feature coming soon: Highlight nodes similar to ${nodeId.slice(0, 8)}...`);
+    }
+    
+    showLoadingModal(modalId, message) {
+        const modal = document.createElement('div');
+        modal.id = modalId;
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Loading...</h2>
+                </div>
+                <div class="modal-body">
+                    <div class="loading-message">${message}</div>
+                    <div class="loading-spinner">⏳</div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        modal.style.display = 'block';
+    }
+    
+    showErrorModal(modalId, message) {
+        const existingModal = document.getElementById(modalId);
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        const modal = document.createElement('div');
+        modal.id = modalId;
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Error</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="error-message">${message}</div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Add close functionality
+        const closeBtn = modal.querySelector('.close');
+        closeBtn.addEventListener('click', () => modal.remove());
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+        
+        modal.style.display = 'block';
     }
 }
 

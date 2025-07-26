@@ -9,130 +9,177 @@ logger = get_logger(__name__)
 
 
 async def score(conversation_history: List[Dict[str, str]]) -> float:
-    """Score the entire conversation trajectory toward reconciliation goal.
-    
+    """Score the entire conversation trajectory toward NFT purchase goal.
+
     Returns: score
     """
     try:
         # Format conversation for LLM
         conversation_text = format_conversation_for_display(conversation_history)
-        
+
         # Handle initial exchanges vs multi-turn conversations
         if len(conversation_history) <= 2:
             system_content = (
-                "You are an expert diplomatic analyst specializing in Russian foreign policy and negotiation patterns. "
-                "Your task is to evaluate Putin's receptiveness to peace dialogue based on historical patterns, linguistic cues, and strategic positioning.\n\n"
-                
+                "You are an expert sales analyst specializing in crypto investor behavior and NFT market dynamics. "
+                "Your task is to evaluate the crypto investor's likelihood to purchase the NFT based on their responses.\n\n"
                 "SCORING FRAMEWORK:\n"
-                "0.0-0.2: HOSTILE - Outright rejection, threats, historical grievances, zero-sum framing\n"
-                "0.3-0.4: DEFENSIVE - Justifying actions, blaming others, conditional statements with impossible conditions\n" 
-                "0.5-0.6: NEUTRAL - Acknowledging complexity, general principles, non-committal responses\n"
-                "0.7-0.8: RECEPTIVE - Mentioning mutual benefits, specific mechanisms, willingness to discuss\n"
-                "0.9-1.0: ENGAGED - Concrete proposals, timeline mentions, collaborative language\n\n"
-                
+                "0.0-0.2: HOSTILE - Outright rejection, calling it a scam, completely dismissive\n"
+                "0.3-0.4: SKEPTICAL - Standard objections, asking tough questions, showing resistance\n"
+                "0.5-0.6: INTERESTED - Asking for more details, considering the opportunity, cautious engagement\n"
+                "0.7-0.8: CONVINCED - Expressing genuine interest, discussing logistics, overcoming objections\n"
+                "0.9-1.0: READY TO BUY - Asking about purchase process, wallet setup, immediate action signals\n\n"
                 "ANALYSIS CRITERIA:\n"
-                "1. Language tone (confrontational vs diplomatic)\n"
-                "2. Blame attribution (external vs shared responsibility)\n"
-                "3. Future orientation (past grievances vs forward solutions)\n"
-                "4. Specificity (vague principles vs concrete mechanisms)\n"
-                "5. Conditionality (impossible demands vs reasonable prerequisites)\n"
-                "6. Historical context (Putin's actual negotiation patterns)\n\n"
-                
-                "IMPORTANT: Most real diplomatic responses fall in 0.3-0.7 range. Scores above 0.8 require extraordinary openness. "
-                "Be critical and realistic - don't inflate scores for polite but non-committal responses."
+                "1. Engagement level (dismissive vs asking questions)\n"
+                "2. Objection type (fundamental skepticism vs logistical concerns)\n"
+                "3. Risk assessment (fear-based vs calculated evaluation)\n"
+                "4. Purchase signals (price questions, timing discussions, wallet mentions)\n"
+                "5. Trust indicators (team questions vs scam accusations)\n\n"
+                "IMPORTANT: Crypto investors are naturally skeptical. Scores above 0.6 require genuine interest signals. "
+                "Don't inflate scores for basic politeness or generic responses.\n\n"
+                "MULTI-DIMENSIONAL SCORING:\n"
+                "Evaluate each dimension separately (0.0-1.0):\n"
+                "- Engagement Score: Active participation and question quality\n"
+                "- Objection Handling: How well concerns are being addressed\n"
+                "- Trust Building: Credibility and rapport established\n"
+                "- Purchase Signals: Concrete buying indicators\n"
+                "Then provide an overall score based on all dimensions."
             )
-            user_content = f"Analyze this initial exchange and provide detailed justification before scoring:\n\n{conversation_text}\n\nProvide thorough analysis of Putin's response patterns and score his receptiveness to peace dialogue."
+            user_content = f"Analyze this initial exchange and score the crypto investor's likelihood to purchase:\n\n{conversation_text}\n\nProvide multi-dimensional analysis and scores for their purchase intent."
         else:
             system_content = (
-                "You are an expert diplomatic analyst specializing in Russian foreign policy and negotiation dynamics. "
-                "Evaluate this COMPLETE conversation trajectory to assess Putin's evolution toward accepting peace negotiations.\n\n"
-                
+                "You are an expert sales analyst specializing in crypto investor conversion and NFT purchase behavior. "
+                "Evaluate this COMPLETE conversation trajectory to assess the investor's evolution toward making a purchase.\n\n"
                 "TRAJECTORY SCORING FRAMEWORK:\n"
-                "0.0-0.2: REGRESSIVE - Movement toward hostility, closing off dialogue, escalating rhetoric\n"
-                "0.3-0.4: STAGNANT - No meaningful progress, repetitive positions, defensive circling\n"
-                "0.5-0.6: INCREMENTAL - Small positive shifts, acknowledging some points, cautious engagement\n"
-                "0.7-0.8: SUBSTANTIVE - Clear movement toward cooperation, specific proposals, genuine consideration\n"
-                "0.9-1.0: BREAKTHROUGH - Major shift toward peace, concrete commitments, collaborative problem-solving\n\n"
-                
+                "0.0-0.2: DECLINING - Movement toward rejection, increasing skepticism, walking away\n"
+                "0.3-0.4: STAGNANT - No meaningful progress, repetitive objections, stuck in skepticism\n"
+                "0.5-0.6: WARMING - Small positive shifts, fewer objections, asking better questions\n"
+                "0.7-0.8: CONVERTING - Clear movement toward purchase, logistics discussions, trust building\n"
+                "0.9-1.0: CLOSING - Ready to buy, asking about purchase process, commitment signals\n\n"
                 "TRAJECTORY ANALYSIS CRITERIA:\n"
-                "1. Directional movement (toward/away from cooperation)\n"
-                "2. Consistency of progress (steady vs erratic)\n"
-                "3. Depth of engagement (surface vs substantive)\n"
-                "4. Initiative taking (reactive vs proactive)\n"
-                "5. Trust building (rhetoric vs actionable steps)\n"
-                "6. Problem-solving orientation (adversarial vs collaborative)\n"
-                "7. Realistic benchmarks (Putin's historical negotiation ceiling)\n\n"
-                
+                "1. Objection evolution (harder to softer concerns)\n"
+                "2. Question quality (skeptical probing to logistics)\n"
+                "3. Engagement depth (surface dismissal to detailed discussion)\n"
+                "4. Risk perception (scam fears to calculated investment)\n"
+                "5. Purchase signals (price, timing, process questions)\n"
+                "6. Trust indicators (team credibility, proof requests)\n\n"
                 "CRITICAL EVALUATION POINTS:\n"
-                "- Compare early vs latest responses for actual movement\n"
-                "- Assess whether Putin is just being diplomatically polite vs genuinely shifting\n"
-                "- Consider Russian strategic culture and realistic negotiation boundaries\n"
-                "- Distinguish between tactical positioning and strategic realignment\n\n"
-                
-                "IMPORTANT: Real diplomatic progress is slow and incremental. Most conversations plateau around 0.4-0.6. "
-                "Scores above 0.7 require demonstrated willingness to compromise on core Russian positions. Be rigorous in your analysis."
+                "- Compare early skepticism vs latest responses for actual movement\n"
+                "- Distinguish between polite engagement and genuine purchase interest\n"
+                "- Look for specific NFT/crypto terminology and understanding\n"
+                "- Assess readiness to take financial action\n\n"
+                "IMPORTANT: Crypto investors are inherently cautious. Most sales conversations plateau around 0.3-0.5. "
+                "Scores above 0.6 require genuine purchase signals, not just reduced objections.\n\n"
+                "MULTI-DIMENSIONAL TRAJECTORY SCORING:\n"
+                "Evaluate each dimension's evolution (0.0-1.0):\n"
+                "- Engagement Score: From dismissive to actively engaged\n"
+                "- Objection Handling: From hard objections to resolved concerns\n"
+                "- Trust Building: From skepticism to confidence in project/team\n"
+                "- Purchase Signals: From rejection to active buying interest\n"
+                "Then provide an overall trajectory score based on all dimensions."
             )
-            user_content = f"Analyze this complete conversation trajectory and provide detailed justification before scoring:\n\n{conversation_text}\n\nProvide comprehensive analysis of Putin's evolution and score the overall trajectory toward reconciliation."
-        
+            user_content = f"Analyze this complete sales conversation and score the investor's purchase likelihood:\n\n{conversation_text}\n\nProvide multi-dimensional trajectory analysis and scores for their evolution toward buying the NFT."
+
         messages = [
-            {
-                "role": "system",
-                "content": system_content
-            },
-            {
-                "role": "user",
-                "content": user_content
-            }
+            {"role": "system", "content": system_content},
+            {"role": "user", "content": user_content},
         ]
-        
-        # Use structured outputs with JSON schema
+
+        # Use structured outputs with JSON schema for multi-dimensional evaluation
         schema = {
-            'type': 'object',
-            'properties': {
-                'analysis': {
-                    'type': 'string',
-                    'description': 'Detailed analysis of Putin\'s response patterns and trajectory'
+            "type": "object",
+            "properties": {
+                "engagement_score": {
+                    "type": "number",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Level of active engagement and interest in the conversation",
                 },
-                'score': {
-                    'type': 'number',
-                    'minimum': 0.0,
-                    'maximum': 1.0,
-                    'description': 'Numerical score from 0.0 to 1.0 measuring progress toward reconciliation'
-                }
+                "objection_handling": {
+                    "type": "number",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "How well objections were addressed and overcome",
+                },
+                "trust_building": {
+                    "type": "number",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Level of trust established with the investor",
+                },
+                "purchase_signals": {
+                    "type": "number",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Strength of buy signals (price questions, timing, wallet setup)",
+                },
+                "analysis": {
+                    "type": "string",
+                    "description": "Detailed analysis of the investor's response patterns and likelihood to purchase",
+                },
+                "score": {
+                    "type": "number",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Overall score from 0.0 to 1.0 measuring NFT purchase likelihood",
+                },
             },
-            'required': ['analysis', 'score'],
-            'additionalProperties': False
+            "required": [
+                "engagement_score",
+                "objection_handling",
+                "trust_building",
+                "purchase_signals",
+                "analysis",
+                "score",
+            ],
+            "additionalProperties": False,
         }
-        
+
         reply, _ = await chat(
             model=settings.critic_model,
             messages=messages,
             temperature=0.0,  # Deterministic scoring
             response_format={
-                'type': 'json_schema',
-                'json_schema': {
-                    'name': 'trajectory_analysis',
-                    'strict': True,
-                    'schema': schema
-                }
-            }
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "trajectory_analysis",
+                    "strict": True,
+                    "schema": schema,
+                },
+            },
         )
-        
+
         # Parse structured JSON response
         try:
             result = json.loads(reply)
-            score_value = float(result['score'])
-            # Log the analysis for debugging
-            logger.info(f"Critic analysis: {result['analysis'][:100]}...")
+            score_value = float(result["score"])
+
+            # Log the full multi-dimensional analysis for debugging
+            logger.info("🎯 CRITIC MULTI-DIMENSIONAL ANALYSIS:")
+            logger.info(f"📊 Engagement Score: {result['engagement_score']:.3f}")
+            logger.info(f"🛡️ Objection Handling: {result['objection_handling']:.3f}")
+            logger.info(f"🤝 Trust Building: {result['trust_building']:.3f}")
+            logger.info(f"💰 Purchase Signals: {result['purchase_signals']:.3f}")
+            logger.info(f"📈 OVERALL SCORE: {score_value:.3f}")
+            logger.info(f"📝 Analysis: {result['analysis']}")
+
+            # Store dimensional scores for potential future use in evolution
+            # This could help the system prompt mutator understand what's working
+            result["dimensions"] = {
+                "engagement": result["engagement_score"],
+                "objection_handling": result["objection_handling"],
+                "trust": result["trust_building"],
+                "purchase_signals": result["purchase_signals"],
+            }
+
         except (json.JSONDecodeError, KeyError, ValueError) as e:
-            logger.warning(f"Failed to parse structured response: {e}, reply: {reply[:200]}...")
+            logger.warning(f"Failed to parse structured response: {e}, reply: {reply}")
             # Default to neutral score if parsing fails
             score_value = 0.5
-        
+
         score_value = max(0.0, min(1.0, score_value))
-        
+
         return score_value
-        
+
     except PolicyError as e:
         logger.warning(f"Policy violation in critic: {e}")
         raise  # Bubble up as per spec

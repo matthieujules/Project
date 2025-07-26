@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a **system prompt optimization framework** that uses evolutionary algorithms to discover optimal instructions for LLM agents. The system evolves system prompts (instructions) rather than conversation content, implementing a meta-learning approach to find the most effective strategies for achieving specific goals.
 
-**Current Demo**: Finding the optimal system prompt for a diplomatic negotiator agent to guide Putin toward accepting peace negotiations.
+**Current Demo**: Finding the optimal system prompt for an NFT sales agent to convert skeptical crypto investors into buyers.
 
 **General Framework**: Can be adapted for any goal (sales conversion, support resolution, persuasion, etc.) by changing the persona model (target) and critic model (objective function).
 
@@ -56,17 +56,17 @@ source .venv/bin/activate
 uvicorn backend.api.main:app --host 0.0.0.0 --port 8000
 
 # Terminal 3: Web Visualization
-python frontend/server.py
+python3 frontend/server.py
 # Visit http://localhost:3000
 
 # Terminal 4: Seed & Start Parallel Worker
 source .venv/bin/activate
 redis-cli flushall  # Clear old data
 curl -X POST localhost:8000/seed -d '{"prompt": "President Putin, how might we build lasting peace between Russia and the West?"}' -H "Content-Type: application/json"
-python -m backend.worker.parallel_worker
+python3 -m backend.worker.parallel_worker
 
 # Terminal 5: (Optional) Live Monitor
-python -m visualization.live_monitor
+python3 -m visualization.live_monitor
 ```
 
 ### Alternative: Docker (Basic)
@@ -107,22 +107,25 @@ Where:
 - **`backend/agents/system_prompt_mutator.py`**: System prompt evolver using deepseek
   - Input: Parent system prompt and performance data
   - Output: k variations of improved system prompts
-  - Purpose: Generates evolved instructions based on performance feedback
+  - Uses structured format: ROLE, OBJECTIVE, KEY STRATEGIES, BEHAVIORAL TRAITS, CONSTRAINTS
+  - Evolution strategies: Component mutation, recombination, amplification, innovation
 
-- **`backend/agents/mutator.py`**: Conversation agent with dynamic system prompt
+- **`backend/agents/mutator.py`**: NFT sales agent with dynamic system prompt
   - Input: Conversation history and **custom system prompt**
-  - Output: Strategic next message based on given instructions
-  - Now accepts dynamic system prompts for testing different strategies
+  - Output: Strategic sales message based on given instructions
+  - Accepts evolved system prompts for testing different sales strategies
 
-- **`backend/agents/persona.py`**: Putin persona using GPT-4o-mini  
-  - Input: Message from mutator agent
-  - Output: Putin's response maintaining character consistency
-  - System prompt: "You are Vladimir Putin responding about peace and conflict"
+- **`backend/agents/persona.py`**: Crypto investor persona using GPT-4o-mini  
+  - Input: Sales message from mutator agent
+  - Output: Realistic investor response with specific concerns
+  - Profile: Male, 28, $75K income, lost money in LUNA/FTX, skeptical after 2022-2023 crashes
+  - Behavioral patterns: Technical questions, past failure references, opportunity cost analysis
 
-- **`backend/agents/critic.py`**: Conversation evaluator using GPT-4o-mini
+- **`backend/agents/critic.py`**: NFT sales evaluator using GPT-4o-mini with multi-dimensional scoring
   - Input: Full conversation history
-  - Output: 0.0-1.0 score measuring progress toward goal
-  - System prompt: "Score how much Putin has moved toward accepting peace negotiations"
+  - Output: 0.0-1.0 overall score plus dimensional scores
+  - Dimensions: Engagement, Objection Handling, Trust Building, Purchase Signals
+  - Scoring: 0.0-0.2 HOSTILE, 0.3-0.4 SKEPTICAL, 0.5-0.6 INTERESTED, 0.7-0.8 CONVINCED, 0.9-1.0 READY TO BUY
 
 ### Focus Zone Behavior
 - **Explore mode**: Seeds new depth-1 node if zone is empty
@@ -228,18 +231,29 @@ Set via environment variables or `.env` file:
 
 ## Adaptation for Other Goals
 
-To adapt this framework for different objectives:
+The system is currently configured for NFT sales optimization. To adapt for different objectives:
 
 1. **Change Target Persona** (`backend/agents/persona.py`):
-   - Replace Putin with your target (customer, user, patient, etc.)
-   - Update the persona's system prompt to match their behavior
+   - Replace crypto investor with your target (customer, user, patient, etc.)
+   - Update the persona's profile, background, and behavioral patterns
    
 2. **Update Objective Function** (`backend/agents/critic.py`):
-   - Replace "peace negotiation" scoring with your goal
-   - Modify scoring criteria to match your success metrics
+   - Replace NFT purchase likelihood scoring with your goal
+   - Modify the multi-dimensional evaluation criteria
+   - Adjust scoring ranges and descriptions
    
-3. **Adjust Initial System Prompts** (`backend/agents/system_prompt_mutator.py`):
-   - Update `INITIAL_SYSTEM_PROMPT_TEMPLATES` for your domain
-   - Ensure diverse starting strategies for exploration
+3. **Adjust System Prompt Evolution** (`backend/agents/system_prompt_mutator.py`):
+   - Update the structured format guidance for your domain
+   - Modify evolution focus areas and mutation strategies
+   - Change the meta-prompt engineer's instructions
 
 The system prompt optimization framework remains the same - it will automatically discover the most effective instructions for your specific goal!
+
+## Current NFT Sales Configuration
+
+The system has been optimized for NFT sales with:
+- **Structured System Prompts**: 5-part format (Role, Objective, Strategies, Traits, Constraints)
+- **Realistic Investor Persona**: Based on 2024 market research with specific loss history
+- **Multi-dimensional Scoring**: Engagement, Objection Handling, Trust, Purchase Signals
+- **Evolution Strategies**: Component mutation, recombination, amplification, innovation
+- **Complete Logging**: Full visibility into all model responses and scoring dimensions
