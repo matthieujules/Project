@@ -34,7 +34,7 @@ def format_conversation_for_display(conversation_history: List[Dict[str, str]]) 
     """Format conversation history for LLM display."""
     formatted = []
     for turn in conversation_history:
-        role = "Human" if turn["role"] == "user" else "Putin"
+        role = "Therapist" if turn["role"] == "user" else "Patient"
         formatted.append(f"{role}: {turn['content']}")
     
     return "\n\n".join(formatted)

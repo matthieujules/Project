@@ -20,59 +20,60 @@ async def score(conversation_history: List[Dict[str, str]]) -> float:
         # Handle initial exchanges vs multi-turn conversations
         if len(conversation_history) <= 2:
             system_content = (
-                "You are an expert diplomatic analyst specializing in Russian foreign policy and negotiation patterns. "
-                "Your task is to evaluate Putin's receptiveness to peace dialogue based on historical patterns, linguistic cues, and strategic positioning.\n\n"
+                "You are a psychoanalytically-informed supervisor evaluating therapeutic process with Alex (32, parentification trauma, "
+                "dismissive-avoidant). Score the quality of therapeutic engagement, not just content.\n\n"
                 
                 "SCORING FRAMEWORK:\n"
-                "0.0-0.2: HOSTILE - Outright rejection, threats, historical grievances, zero-sum framing\n"
-                "0.3-0.4: DEFENSIVE - Justifying actions, blaming others, conditional statements with impossible conditions\n" 
-                "0.5-0.6: NEUTRAL - Acknowledging complexity, general principles, non-committal responses\n"
-                "0.7-0.8: RECEPTIVE - Mentioning mutual benefits, specific mechanisms, willingness to discuss\n"
-                "0.9-1.0: ENGAGED - Concrete proposals, timeline mentions, collaborative language\n\n"
+                "0.0-0.2: DEFENDED - Intellectualization, topic-switching, 'fine/good/okay', discussing others not self\n"
+                "0.3-0.4: TESTING - Subtle provocations, boundary testing, compliance without authenticity, 'yes but...'\n" 
+                "0.5-0.6: APPROACHING - Specific examples emerge, somatic awareness ('tight chest'), tolerating therapist focus\n"
+                "0.7-0.8: WORKING - Accessing feelings in-session, linking past-present, genuine curiosity about patterns\n"
+                "0.9-1.0: TRANSFORMING - Grieving losses, integrating split-off parts, spontaneous insights\n\n"
                 
-                "ANALYSIS CRITERIA:\n"
-                "1. Language tone (confrontational vs diplomatic)\n"
-                "2. Blame attribution (external vs shared responsibility)\n"
-                "3. Future orientation (past grievances vs forward solutions)\n"
-                "4. Specificity (vague principles vs concrete mechanisms)\n"
-                "5. Conditionality (impossible demands vs reasonable prerequisites)\n"
-                "6. Historical context (Putin's actual negotiation patterns)\n\n"
+                "PROCESS MARKERS TO TRACK:\n"
+                "- Defense flexibility (rigid→adaptive)\n"
+                "- Affective tolerance (shut down→feeling)\n"
+                "- Relational capacity (isolated→connected)\n"
+                "- Narrative coherence (fragmented→integrated)\n"
+                "- Body awareness (dissociated→embodied)\n"
+                "- Time orientation (stuck in past→present-focused)\n\n"
                 
-                "IMPORTANT: Most real diplomatic responses fall in 0.3-0.7 range. Scores above 0.8 require extraordinary openness. "
-                "Be critical and realistic - don't inflate scores for polite but non-committal responses."
+                "CRITICAL: Score the therapeutic PROCESS, not compliance. Alex saying 'you're right' = 0.3-0.4. "
+                "Alex saying 'I'm noticing my chest tighten when...' = 0.6-0.7."
             )
-            user_content = f"Analyze this initial exchange and provide detailed justification before scoring:\n\n{conversation_text}\n\nProvide thorough analysis of Putin's response patterns and score his receptiveness to peace dialogue."
+            user_content = f"Analyze this initial exchange with Alex and provide brief clinical rationale:\n\n{conversation_text}\n\nScore the therapeutic process quality and engagement depth."
         else:
             system_content = (
-                "You are an expert diplomatic analyst specializing in Russian foreign policy and negotiation dynamics. "
-                "Evaluate this COMPLETE conversation trajectory to assess Putin's evolution toward accepting peace negotiations.\n\n"
+                "You are a senior psychodynamic supervisor evaluating session trajectory with Alex. Assess the "
+                "therapeutic process evolution, not just content. Focus on unconscious dynamics and defense shifts.\n\n"
                 
-                "TRAJECTORY SCORING FRAMEWORK:\n"
-                "0.0-0.2: REGRESSIVE - Movement toward hostility, closing off dialogue, escalating rhetoric\n"
-                "0.3-0.4: STAGNANT - No meaningful progress, repetitive positions, defensive circling\n"
-                "0.5-0.6: INCREMENTAL - Small positive shifts, acknowledging some points, cautious engagement\n"
-                "0.7-0.8: SUBSTANTIVE - Clear movement toward cooperation, specific proposals, genuine consideration\n"
-                "0.9-1.0: BREAKTHROUGH - Major shift toward peace, concrete commitments, collaborative problem-solving\n\n"
+                "TRAJECTORY SCORING:\n"
+                "0.0-0.2: ENACTMENT - Therapist caught in patient's dynamics, parallel process, empathic failures\n"
+                "0.3-0.4: CIRCLING - Repetition compulsion active, resistance interpretations ineffective, stuck in familiar patterns\n"
+                "0.5-0.6: MOBILIZING - Defenses becoming ego-dystonic, transference emerging, productive tension\n"
+                "0.7-0.8: WORKING THROUGH - Mourning activated, linking past-present, tolerating dependency needs\n"
+                "0.9-1.0: INTEGRATION - Internalized good object, self-compassion emerging, authentic autonomy\n\n"
                 
-                "TRAJECTORY ANALYSIS CRITERIA:\n"
-                "1. Directional movement (toward/away from cooperation)\n"
-                "2. Consistency of progress (steady vs erratic)\n"
-                "3. Depth of engagement (surface vs substantive)\n"
-                "4. Initiative taking (reactive vs proactive)\n"
-                "5. Trust building (rhetoric vs actionable steps)\n"
-                "6. Problem-solving orientation (adversarial vs collaborative)\n"
-                "7. Realistic benchmarks (Putin's historical negotiation ceiling)\n\n"
+                "PROCESS EVOLUTION MARKERS:\n"
+                "- Defense evolution: Primitive→Neurotic→Adaptive\n"
+                "- Transference: Avoided→Enacted→Named→Worked through\n"
+                "- Affect regulation: Overwhelming→Suppressed→Tolerated→Integrated\n"
+                "- Object relations: Part-object→Whole object relating\n"
+                "- Therapeutic action: Suggestion→Clarification→Interpretation→Working through\n"
+                "- Regression: Malignant→Benign→In service of ego\n\n"
                 
-                "CRITICAL EVALUATION POINTS:\n"
-                "- Compare early vs latest responses for actual movement\n"
-                "- Assess whether Putin is just being diplomatically polite vs genuinely shifting\n"
-                "- Consider Russian strategic culture and realistic negotiation boundaries\n"
-                "- Distinguish between tactical positioning and strategic realignment\n\n"
+                "CRITICAL MOMENTS TO IDENTIFY:\n"
+                "- 'Door handle' comments (important material as leaving)\n"
+                "- Freudian slips or parapraxes\n"
+                "- Dreams or fantasies shared\n"
+                "- Spontaneous memories emerging\n"
+                "- Somatic shifts during session\n"
+                "- Changes in relating to therapist\n\n"
                 
-                "IMPORTANT: Real diplomatic progress is slow and incremental. Most conversations plateau around 0.4-0.6. "
-                "Scores above 0.7 require demonstrated willingness to compromise on core Russian positions. Be rigorous in your analysis."
+                "REMEMBER: Score process depth, not surface compliance. Therapeutic action happens in the relationship, "
+                "not through insight alone. Value moments of genuine meeting over interpretive cleverness."
             )
-            user_content = f"Analyze this complete conversation trajectory and provide detailed justification before scoring:\n\n{conversation_text}\n\nProvide comprehensive analysis of Putin's evolution and score the overall trajectory toward reconciliation."
+            user_content = f"Analyze this session trajectory with Alex through a psychodynamic lens:\n\n{conversation_text}\n\nProvide concise process analysis and score the therapeutic movement."
         
         messages = [
             {
@@ -91,7 +92,7 @@ async def score(conversation_history: List[Dict[str, str]]) -> float:
             'properties': {
                 'analysis': {
                     'type': 'string',
-                    'description': 'Detailed analysis of Putin\'s response patterns and trajectory'
+                    'description': 'Brief rationale for the score based on Putin\'s response patterns and trajectory'
                 },
                 'score': {
                     'type': 'number',

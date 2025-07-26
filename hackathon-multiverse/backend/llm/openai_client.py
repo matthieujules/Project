@@ -14,18 +14,22 @@ class PolicyError(Exception):
     pass
 
 
-# Cost per 1K tokens for different models (as of 2024)
+# Cost per 1K tokens for different models (as of 2024-2025)
 COST_PER_1K_TOKENS = {
     "gpt-4": {"input": 0.03, "output": 0.06},
     "gpt-4-turbo": {"input": 0.01, "output": 0.03},
     "gpt-4o-mini": {"input": 0.00015, "output": 0.0006},
     "gpt-3.5-turbo": {"input": 0.0005, "output": 0.0015},
     "gpt-3.5-turbo-16k": {"input": 0.001, "output": 0.002},
+    # OpenAI o3 models
+    "o3-2025-04-16": {"input": 0.015, "output": 0.06},  # Estimated pricing for o3
     # Qwen models via OpenRouter (approximate pricing)
     "qwen/qwen-2.5-72b-instruct": {"input": 0.0009, "output": 0.0009},
     "qwen/qwen-2.5-32b-instruct": {"input": 0.0006, "output": 0.0006},
     "qwen/qwen-2.5-14b-instruct": {"input": 0.0003, "output": 0.0003},
     "qwen/qwen-2.5-7b-instruct": {"input": 0.0002, "output": 0.0002},
+    # DeepSeek models via OpenRouter
+    "deepseek/deepseek-chat-v3-0324": {"input": 0.00014, "output": 0.00028},
 }
 
 
@@ -149,6 +153,15 @@ async def chat(
         client = openai.AsyncOpenAI(api_key=settings.openai_api_key)
     
     try:
+        # Log full prompt being sent to model
+        logger.info(f"🤖 SENDING TO {model}:")
+        for i, msg in enumerate(messages):
+            role = msg.get("role", "unknown")
+            content = msg.get("content", "")
+            logger.info(f"   [{i}] {role.upper()}: {content}")
+        logger.info(f"   PARAMS: temp={temperature}, n={n}, max_tokens={max_tokens}")
+        logger.info("=" * 80)
+        
         # Build API call parameters
         api_params = {
             "model": model,
@@ -186,6 +199,16 @@ async def chat(
         prompt_tokens = response.usage.prompt_tokens
         completion_tokens = response.usage.completion_tokens
         cost = calculate_cost(model, prompt_tokens, completion_tokens)
+        
+        # Log the response received from model
+        logger.info(f"🤖 RESPONSE FROM {model}:")
+        if isinstance(reply, str):
+            logger.info(f"   REPLY: {reply}")
+        else:
+            for i, r in enumerate(reply):
+                logger.info(f"   REPLY[{i}]: {r}")
+        logger.info(f"   TOKENS: prompt={prompt_tokens}, completion={completion_tokens}, cost=${cost:.4f}")
+        logger.info("=" * 80)
         
         # Update Redis counters
         await update_usage_counter(cost, prompt_tokens, completion_tokens, model, n)

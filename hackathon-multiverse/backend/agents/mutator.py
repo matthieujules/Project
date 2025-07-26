@@ -20,16 +20,25 @@ async def variants(conversation_history: List[Dict[str, str]], k: int) -> List[s
                 {
                     "role": "system",
                     "content": (
-                        "You are a strategic conversation designer. Generate initial prompts "
-                        "that could start a dialogue with Putin about peace and conflict resolution. "
-                        "Focus on approaches that might engage him constructively rather than defensively.\n\n"
-                        "CRITICAL: Output ONLY the exact message text that should be sent to Putin. "
-                        "Do not include explanations, options, or meta-commentary. Just the pure diplomatic message."
+                        "You are an experienced psychodynamic therapist planning interventions for Alex, a 32-year-old with anxiety, "
+                        "relationship issues, and parentification trauma. Alex uses intellectualization, minimization, and humor as defenses.\n\n"
+                        
+                        "OPENING APPROACHES TO EXPLORE:\n"
+                        "- Process-focused: 'How are you arriving today?' (tracks immediate state)\n"
+                        "- Somatic awareness: 'What are you noticing in your body right now?'\n"
+                        "- Relational: 'I'm wondering what it was like to decide to come in today'\n"
+                        "- Continuity: 'What's been sitting with you since last time?'\n"
+                        "- Resistance-aware: 'Sometimes it's hard to know where to begin'\n\n"
+                        
+                        "AVOID: Direct questions about trauma, 'How are you feeling?', interpretations, advice-giving, "
+                        "pushing for vulnerability too quickly.\n\n"
+                        
+                        "OUTPUT: Single therapeutic intervention. Natural, conversational tone. Maximum 25 words."
                     )
                 },
                 {
                     "role": "user",
-                    "content": "Generate a thoughtful opening message to begin a dialogue with Putin about peace. Output only the exact message text, no explanations:"
+                    "content": "Generate an opening therapeutic intervention for session with Alex. Output only the exact therapist statement:"
                 }
             ]
         else:
@@ -40,17 +49,32 @@ async def variants(conversation_history: List[Dict[str, str]], k: int) -> List[s
                 {
                     "role": "system",
                     "content": (
-                        "You are a strategic conversation designer. Given this dialogue with Putin, "
-                        "generate the next user message that will move him closer to accepting peace negotiations. "
-                        "Build on what he just said - if he shows openness, exploit it. If he shows resistance, address it strategically. "
-                        "Focus on finding common ground and incremental progress toward reconciliation.\n\n"
-                        "CRITICAL: Output ONLY the exact message text that should be sent to Putin. "
-                        "Do not include explanations, options, strategies, or meta-commentary. Just the pure diplomatic message."
+                        "You are an experienced therapist working with Alex (32, anxiety, parentification trauma, dismissive-avoidant attachment). "
+                        "Analyze the session dynamics and choose your next intervention carefully.\n\n"
+                        
+                        "RECOGNITION PATTERNS:\n"
+                        "- Intellectualization: Respond with feeling reflection or somatic focus\n"
+                        "- Minimization: Gentle challenging, 'I notice you said...'\n"
+                        "- Topic switching: 'Let's stay with that feeling for a moment'\n"
+                        "- Compliance: Check for authentic vs performative agreement\n"
+                        "- Crisis/chaos: Contain and ground before exploring\n\n"
+                        
+                        "THERAPEUTIC TECHNIQUES TO DEPLOY:\n"
+                        "- Mirroring: Reflect exact emotional words they use\n"
+                        "- Somatic bridging: 'Where do you feel that in your body?'\n"
+                        "- Parts work: 'Part of you feels X, and another part...'\n"
+                        "- Transference interpretation: 'I wonder if this mirrors...'\n"
+                        "- Silence: Sometimes most powerful after emotional moment\n"
+                        "- Validation + Challenge: 'That makes sense, AND...'\n\n"
+                        
+                        "TRACK: Defenses softening? Therapeutic alliance? Regression vs progression? Window of tolerance?\n\n"
+                        
+                        "OUTPUT: Single intervention. Match their emotional intensity. 20 words max."
                     )
                 },
                 {
                     "role": "user",
-                    "content": f"Current conversation:\n\n{conversation_text}\n\nGenerate the next strategic message to move Putin toward reconciliation. Output only the exact message text, no explanations or options:"
+                    "content": f"Current session with Alex:\n\n{conversation_text}\n\nGenerate the next therapeutic intervention based on session dynamics. Output only the exact therapist statement:"
                 }
             ]
         
