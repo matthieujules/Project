@@ -6,9 +6,22 @@ AI-powered therapeutic conversation optimization system using MCTS and multi-age
 
 ### Prerequisites
 
-- Python 3.11+ with virtual environment
+- Python 3.11+ 
 - Redis server installed
 - OpenAI API key set in `.env` file
+
+### Virtual Environment Setup
+
+```bash
+# Create virtual environment
+python3 -m venv .venv
+
+# Activate virtual environment (do this in each terminal)
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
 
 ### Step-by-Step Launch Sequence
 
@@ -22,41 +35,40 @@ redis-server
 **Terminal 2: Start Backend API**
 
 ```bash
-cd /Users/matthieuhuss/AdventureX-Frontend-Fix/hackathon-multiverse
-# Activate virtual environment if not already active
+cd /Users/matthieuhuss/AdventureX-Final/hackathon-multiverse
+source .venv/bin/activate
 uvicorn backend.api.main:app --host 0.0.0.0 --port 8000
 ```
 
 **Terminal 3: Start Web Visualization**
 
 ```bash
-cd /Users/matthieuhuss/AdventureX-Frontend-Fix/hackathon-multiverse
-python frontend/server.py
+cd /Users/matthieuhuss/AdventureX-Final/hackathon-multiverse
+source .venv/bin/activate
+python3 frontend/server.py
 # Visit http://localhost:3000 to see the visualization
 ```
 
 **Terminal 4: Seed the System & Start Worker**
 
 ```bash
-# Navigate to the hackathon-multiverse directory
-cd /Users/matthieuhuss/AdventureX-Frontend-Fix/hackathon-multiverse
+cd /Users/matthieuhuss/AdventureX-Final/hackathon-multiverse
+source .venv/bin/activate
 
-# If not already in virtual environment (check for (.venv) in prompt), activate it:
-# source ../.venv/bin/activate  # or wherever your venv is located
-
-# Clear any old data and seed a conversation
+# Clear any old data and seed the system
 redis-cli flushall
-curl -X POST localhost:8000/seed -d '"I noticed you seem a bit tense as you sit down. What brings you in today?"' -H "Content-Type: application/json"
+python3 scripts/dev_seed.py
 
 # Start the parallel worker
-python -m backend.worker.parallel_worker
+python3 -m backend.worker.parallel_worker
 ```
 
 **Terminal 5: (Optional) Live Terminal Monitor**
 
 ```bash
-cd /Users/matthieuhuss/AdventureX-Frontend-Fix/hackathon-multiverse
-python -m visualization.live_monitor
+cd /Users/matthieuhuss/AdventureX-Final/hackathon-multiverse
+source .venv/bin/activate
+python3 -m visualization.live_monitor
 ```
 
 ### What You'll See
@@ -88,7 +100,7 @@ docker compose up --build
 **Seed a root node**
 
 ```bash
-curl -X POST localhost:8000/seed -d '"What brings you here today?"' -H "Content-Type: application/json"
+python3 scripts/dev_seed.py
 ```
 
 ## For UI Developers

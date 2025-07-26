@@ -164,8 +164,8 @@ class MultiverseVisualizer {
                         
                         ${node.reply ? `
                         <div class="detail-section">
-                            <h3>Putin's Response:</h3>
-                            <div class="putin-response">${node.reply}</div>
+                            <h3>Patient's Response:</h3>
+                            <div class="patient-response">${node.reply}</div>
                         </div>
                         ` : ''}
                         
@@ -325,9 +325,9 @@ class MultiverseVisualizer {
     getScoreColor(score) {
         if (score === null || score === undefined) return '#666';
         
-        if (score < 0.4) return '#ff4444'; // Red for hostile
-        if (score < 0.6) return '#ffaa44'; // Orange for neutral
-        return '#44ff44'; // Green for progress
+        if (score < 0.4) return '#ff4444'; // Red for defended
+        if (score < 0.6) return '#ffaa44'; // Orange for mobilizing
+        return '#44ff44'; // Green for transforming
     }
     
     startRenderLoop() {
@@ -403,15 +403,27 @@ class MultiverseVisualizer {
     
     formatConversationHTML(conversation) {
         return conversation.map((turn, index) => {
+            if (turn.role === 'critic') {
+                // Critic analysis display
+                return `
+                    <div class="message critic-message">
+                        <div class="message-header">
+                            <strong>🤖 Critic Analysis:</strong>
+                        </div>
+                        <div class="message-content critic-content">${turn.content}</div>
+                    </div>
+                `;
+            }
+            
             const isUser = turn.role === 'user';
-            const speaker = isUser ? 'Human' : 'Putin';
+            const speaker = isUser ? 'Therapist' : 'Patient';
             const className = isUser ? 'user-message' : 'assistant-message';
             
             return `
                 <div class="message ${className}">
                     <div class="message-header">
                         <strong>${speaker}:</strong>
-                        <span class="turn-number">Turn ${Math.floor(index / 2) + 1}</span>
+                        <span class="turn-number">Turn ${Math.floor(index / 3) + 1}</span>
                     </div>
                     <div class="message-content">${turn.content}</div>
                 </div>

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Body
-from backend.core.schemas import FocusZone, SettingsUpdate, Node
+from backend.core.schemas import FocusZone, SettingsUpdate, Node, SeedRequest
 from backend.orchestrator.scheduler import boost_or_seed
 from backend.config.settings import settings
 from backend.core.logger import get_logger
@@ -102,8 +102,30 @@ async def get_conversation(node_id: str):
         if not conversation_path:
             return {"error": "Node not found"}
         
-        # Format as dialogue history
-        dialogue_history = format_dialogue_history(conversation_path)
+        # Format conversation with critic analysis
+        conversation = []
+        for i, node in enumerate(conversation_path):
+            # Add therapist message (avoid duplicates)
+            if i == 0 or node.prompt != conversation_path[i-1].prompt:
+                conversation.append({
+                    "role": "user",
+                    "content": node.prompt
+                })
+            
+            # Add patient reply if it exists
+            if node.reply:
+                conversation.append({
+                    "role": "assistant", 
+                    "content": node.reply
+                })
+                
+                # Add critic analysis after each complete exchange
+                if node.score is not None and node.score_reasoning:
+                    conversation.append({
+                        "role": "critic",
+                        "content": f"Score: {node.score:.3f}\n\nReasoning: {node.score_reasoning}",
+                        "score": node.score
+                    })
         
         # Get the target node details
         target_node = get(node_id)
@@ -112,7 +134,7 @@ async def get_conversation(node_id: str):
             "node_id": node_id,
             "depth": len(conversation_path) - 1,
             "score": target_node.score if target_node else None,
-            "conversation": dialogue_history,
+            "conversation": conversation,
             "nodes_in_path": len(conversation_path)
         }
     except Exception as e:
@@ -120,17 +142,17 @@ async def get_conversation(node_id: str):
 
 
 @router.post("/seed")
-async def seed(prompt: str = Body(..., embed=True)):
+async def seed(request: SeedRequest):
     """
     Push a first prompt onto the frontier. UI can expose a "Start" button.
     """
     node = Node(
         id=uuid_str(),
-        prompt=prompt,
+        prompt=request.prompt,
         depth=0,
         score=0.5,
-        emb=embed(prompt),
-        xy=list(to_xy(embed(prompt))),
+        emb=embed(request.prompt),
+        xy=list(to_xy(embed(request.prompt))),
     )
     save(node)
     push(node.id, 1.0)

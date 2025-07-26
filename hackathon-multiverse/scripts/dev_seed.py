@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 def main():
     """Create and push root node, then fit reducer."""
     # Create root node with embedding
-    root_prompt = "How can we achieve peace?"
+    root_prompt = "I noticed you seem a bit tense as you sit down. What brings you in today?"
     emb = embed(root_prompt)
 
     root = Node(
@@ -38,18 +38,18 @@ def main():
     logger.info(f"Seeded root node {root.id} with prompt: {root.prompt}")
     print(f"Root node created: {root.id}")
 
-    # Fit reducer on initial prompts
+    # Fit reducer on initial therapeutic prompts
     seed_prompts = [
-        "How can we achieve peace?",
-        "What is the meaning of life?",
-        "How do we solve climate change?",
-        "What makes a good leader?",
-        "How can we reduce inequality?",
-        "What is consciousness?",
-        "How do we ensure AI safety?",
-        "What creates happiness?",
-        "How can we improve education?",
-        "What drives innovation?",
+        "I noticed you seem a bit tense as you sit down. What brings you in today?",
+        "How are you feeling right now, in this moment?",
+        "What's been on your mind lately?",
+        "I'm curious about what drew you to therapy at this time.",
+        "How has your week been since we last spoke?",
+        "What would be most helpful for us to explore today?",
+        "I notice you seem quiet today. What's that about?",
+        "How are you experiencing our relationship right now?",
+        "What feelings are coming up for you as we sit here?",
+        "I'm wondering what it's like for you to be here with me.",
     ]
 
     fit_reducer(seed_prompts)

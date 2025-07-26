@@ -8,8 +8,8 @@ from backend.core.conversation import format_conversation_for_display
 logger = get_logger(__name__)
 
 
-async def score(conversation_history: List[Dict[str, str]]) -> float:
-    """Score the entire conversation trajectory toward reconciliation goal.
+async def score(conversation_history: List[Dict[str, str]]) -> tuple[float, str]:
+    """Score the entire therapeutic conversation trajectory toward healing.
     
     Returns: score
     """
@@ -92,13 +92,13 @@ async def score(conversation_history: List[Dict[str, str]]) -> float:
             'properties': {
                 'analysis': {
                     'type': 'string',
-                    'description': 'Brief rationale for the score based on Putin\'s response patterns and trajectory'
+                    'description': 'Brief rationale for the score based on patient response patterns and therapeutic trajectory'
                 },
                 'score': {
                     'type': 'number',
                     'minimum': 0.0,
                     'maximum': 1.0,
-                    'description': 'Numerical score from 0.0 to 1.0 measuring progress toward reconciliation'
+                    'description': 'Numerical score from 0.0 to 1.0 measuring therapeutic progress toward healing'
                 }
             },
             'required': ['analysis', 'score'],
@@ -123,16 +123,18 @@ async def score(conversation_history: List[Dict[str, str]]) -> float:
         try:
             result = json.loads(reply)
             score_value = float(result['score'])
+            full_reasoning = result.get('analysis', 'No reasoning provided')
             # Log the analysis for debugging
-            logger.info(f"Critic analysis: {result['analysis'][:100]}...")
+            logger.info(f"Critic analysis: {full_reasoning[:100]}...")
         except (json.JSONDecodeError, KeyError, ValueError) as e:
             logger.warning(f"Failed to parse structured response: {e}, reply: {reply[:200]}...")
             # Default to neutral score if parsing fails
             score_value = 0.5
+            full_reasoning = "Failed to parse critic response"
         
         score_value = max(0.0, min(1.0, score_value))
         
-        return score_value
+        return score_value, full_reasoning
         
     except PolicyError as e:
         logger.warning(f"Policy violation in critic: {e}")

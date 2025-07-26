@@ -22,8 +22,12 @@ def format_dialogue_history(conversation_path: List[Node]) -> List[Dict[str, str
     """Convert conversation path to alternating user/assistant messages."""
     dialogue = []
     
-    for node in conversation_path:
-        dialogue.append({"role": "user", "content": node.prompt})
+    for i, node in enumerate(conversation_path):
+        # For root node or when prompt differs from previous, add therapist message
+        if i == 0 or node.prompt != conversation_path[i-1].prompt:
+            dialogue.append({"role": "user", "content": node.prompt})
+        
+        # Add patient response if it exists
         if node.reply:
             dialogue.append({"role": "assistant", "content": node.reply})
     
@@ -34,7 +38,7 @@ def format_conversation_for_display(conversation_history: List[Dict[str, str]]) 
     """Format conversation history for LLM display."""
     formatted = []
     for turn in conversation_history:
-        role = "Human" if turn["role"] == "user" else "Putin"
+        role = "Therapist" if turn["role"] == "user" else "Patient"
         formatted.append(f"{role}: {turn['content']}")
     
     return "\n\n".join(formatted)

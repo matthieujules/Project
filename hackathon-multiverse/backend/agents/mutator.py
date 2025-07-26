@@ -1,9 +1,10 @@
 import asyncio
-from typing import List, Dict
-from backend.llm.openai_client import chat, PolicyError
-from backend.core.logger import get_logger
+from typing import Dict, List
+
 from backend.config.settings import settings
 from backend.core.conversation import format_conversation_for_display
+from backend.core.logger import get_logger
+from backend.llm.openai_client import PolicyError, chat
 
 logger = get_logger(__name__)
 
@@ -20,25 +21,18 @@ async def variants(conversation_history: List[Dict[str, str]], k: int) -> List[s
                 {
                     "role": "system",
                     "content": (
-                        "You are an experienced psychodynamic therapist planning interventions for Alex, a 32-year-old with anxiety, "
-                        "relationship issues, and parentification trauma. Alex uses intellectualization, minimization, and humor as defenses.\n\n"
+                        "You are a therapist having a conversation with Alex, a 32-year-old person with work anxiety, "
+                        "relationship issues, and sleep troubles. Alex tends to overthink and use humor when uncomfortable.\n\n"
                         
-                        "OPENING APPROACHES TO EXPLORE:\n"
-                        "- Process-focused: 'How are you arriving today?' (tracks immediate state)\n"
-                        "- Somatic awareness: 'What are you noticing in your body right now?'\n"
-                        "- Relational: 'I'm wondering what it was like to decide to come in today'\n"
-                        "- Continuity: 'What's been sitting with you since last time?'\n"
-                        "- Resistance-aware: 'Sometimes it's hard to know where to begin'\n\n"
+                        "Generate natural therapy responses that help Alex explore their thoughts and feelings. "
+                        "Keep it conversational and supportive.\n\n"
                         
-                        "AVOID: Direct questions about trauma, 'How are you feeling?', interpretations, advice-giving, "
-                        "pushing for vulnerability too quickly.\n\n"
-                        
-                        "OUTPUT: Single therapeutic intervention. Natural, conversational tone. Maximum 25 words."
+                        "OUTPUT: Just the therapist's response in natural conversation. Remember to keep it concise."
                     )
                 },
                 {
                     "role": "user",
-                    "content": "Generate an opening therapeutic intervention for session with Alex. Output only the exact therapist statement:"
+                    "content": "Generate an opening question or statement for a therapy session with Alex:"
                 }
             ]
         else:
@@ -49,27 +43,13 @@ async def variants(conversation_history: List[Dict[str, str]], k: int) -> List[s
                 {
                     "role": "system",
                     "content": (
-                        "You are an experienced therapist working with Alex (32, anxiety, parentification trauma, dismissive-avoidant attachment). "
-                        "Analyze the session dynamics and choose your next intervention carefully.\n\n"
+                        "You are a therapist having a conversation with Alex, who has work anxiety, relationship issues, "
+                        "and tends to overthink things. Alex sometimes uses humor when things get uncomfortable.\n\n"
                         
-                        "RECOGNITION PATTERNS:\n"
-                        "- Intellectualization: Respond with feeling reflection or somatic focus\n"
-                        "- Minimization: Gentle challenging, 'I notice you said...'\n"
-                        "- Topic switching: 'Let's stay with that feeling for a moment'\n"
-                        "- Compliance: Check for authentic vs performative agreement\n"
-                        "- Crisis/chaos: Contain and ground before exploring\n\n"
+                        "Based on the conversation so far, respond naturally as a supportive therapist would. "
+                        "Help Alex explore what they're sharing without being pushy.\n\n"
                         
-                        "THERAPEUTIC TECHNIQUES TO DEPLOY:\n"
-                        "- Mirroring: Reflect exact emotional words they use\n"
-                        "- Somatic bridging: 'Where do you feel that in your body?'\n"
-                        "- Parts work: 'Part of you feels X, and another part...'\n"
-                        "- Transference interpretation: 'I wonder if this mirrors...'\n"
-                        "- Silence: Sometimes most powerful after emotional moment\n"
-                        "- Validation + Challenge: 'That makes sense, AND...'\n\n"
-                        
-                        "TRACK: Defenses softening? Therapeutic alliance? Regression vs progression? Window of tolerance?\n\n"
-                        
-                        "OUTPUT: Single intervention. Match their emotional intensity. 20 words max."
+                        "OUTPUT: Just the therapist's response in natural conversation."
                     )
                 },
                 {

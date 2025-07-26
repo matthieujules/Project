@@ -7,6 +7,7 @@ class Node(BaseModel):
     prompt: str
     reply: Optional[str] = None
     score: Optional[float] = None
+    score_reasoning: Optional[str] = None  # Critic's reasoning for the score
     depth: int
     parent: Optional[str] = None
     emb: Optional[List[float]] = None
@@ -36,3 +37,9 @@ class SettingsUpdate(BaseModel):
     lambda_trend: Optional[float] = None
     lambda_sim: Optional[float] = None
     lambda_depth: Optional[float] = None
+
+
+class SeedRequest(BaseModel):
+    """Request to seed a new conversation."""
+    
+    prompt: str

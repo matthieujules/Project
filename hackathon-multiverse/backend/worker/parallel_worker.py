@@ -18,6 +18,71 @@ logger = get_logger(__name__)
 BATCH_SIZE = 20  # Process 20 nodes simultaneously
 
 
+async def process_patient_response(therapist_prompt: str, parent: Node, parent_conversation: List[dict], top_k_embeddings: List[List[float]]) -> Node:
+    """Process patient response to therapist statement."""
+    child_id = uuid_str()
+    
+    try:
+        # Get patient response to the therapist prompt
+        reply = await call(therapist_prompt)
+        
+        # Build full conversation including this new exchange
+        full_conversation = parent_conversation + [
+            {"role": "user", "content": therapist_prompt},
+            {"role": "assistant", "content": reply}
+        ]
+        
+        # Score the entire conversation trajectory
+        variant_score, score_reasoning = await score(full_conversation)
+        
+        # Generate embedding for the patient's response
+        emb = embed(reply)
+        xy = list(to_xy(emb))
+        
+        # Create child node - note: prompt is still therapist's, reply is patient's
+        child = Node(
+            id=child_id,
+            prompt=therapist_prompt,
+            reply=reply,
+            score=variant_score,
+            score_reasoning=score_reasoning,
+            depth=parent.depth + 1,
+            parent=parent.id,
+            emb=emb,
+            xy=xy,
+        )
+        
+        # Calculate priority using scheduler
+        priority = calculate_priority(
+            child, parent_score=parent.score, top_k_embeddings=top_k_embeddings
+        )
+        
+        # Save child and push to frontier with calculated priority
+        save(child)
+        push(child.id, priority)
+        
+        # Publish GraphUpdate to Redis for WebSocket broadcast
+        graph_update = GraphUpdate(
+            id=child.id, xy=child.xy, score=child.score, parent=child.parent
+        )
+        r = get_redis()
+        r.publish("graph_updates", graph_update.model_dump_json())
+        
+        # Enhanced logging
+        conv_turns = len(full_conversation) // 2
+        therapist_preview = therapist_prompt[:50] + "..." if len(therapist_prompt) > 50 else therapist_prompt
+        reply_preview = reply[:40] + "..." if len(reply) > 40 else reply
+        
+        logger.info(f"  ✅ {child_id[:8]}... TRAJECTORY_SCORE={variant_score:.3f} priority={priority:.3f}")
+        logger.info(f"     💬 Therapist asked: '{therapist_preview}'")
+        logger.info(f"     🎯 Patient replied: '{reply_preview}' (after {conv_turns} turns)")
+        return child
+        
+    except Exception as e:
+        logger.error(f"  ❌ Error processing patient response {child_id[:8]}...: {e}")
+        raise
+
+
 async def process_variant(variant_prompt: str, parent: Node, parent_conversation: List[dict], top_k_embeddings: List[List[float]]) -> Node:
     """Process a single variant: persona → critic → scheduler → save."""
     child_id = uuid_str()
@@ -33,7 +98,7 @@ async def process_variant(variant_prompt: str, parent: Node, parent_conversation
         ]
         
         # Score the entire conversation trajectory
-        variant_score = await score(full_conversation)
+        variant_score, score_reasoning = await score(full_conversation)
         
         # Generate embedding and 2D projection
         emb = embed(variant_prompt)
@@ -45,6 +110,7 @@ async def process_variant(variant_prompt: str, parent: Node, parent_conversation
             prompt=variant_prompt,
             reply=reply,
             score=variant_score,
+            score_reasoning=score_reasoning,
             depth=parent.depth + 1,
             parent=parent.id,
             emb=emb,
@@ -73,8 +139,8 @@ async def process_variant(variant_prompt: str, parent: Node, parent_conversation
         reply_preview = reply[:40] + "..." if len(reply) > 40 else reply
         
         logger.info(f"  ✅ {child_id[:8]}... TRAJECTORY_SCORE={variant_score:.3f} priority={priority:.3f}")
-        logger.info(f"     📝 Strategic prompt: '{prompt_preview}'")
-        logger.info(f"     🎯 Putin replied: '{reply_preview}' (after {conv_turns} turns)")
+        logger.info(f"     🩺 Therapist follow-up: '{prompt_preview}'")
+        logger.info(f"     🎯 Patient replied: '{reply_preview}' (after {conv_turns} turns)")
         return child
         
     except Exception as e:
@@ -106,15 +172,27 @@ async def process_node(parent_id: str, top_k_embeddings: List[List[float]]) -> L
         else:
             logger.info(f"  📚 Root node - no conversation context")
         
-        # Generate 3 strategic variants based on full conversation
-        variant_list = await variants(parent_conversation, k=3)
-        logger.info(f"  🧬 Generated {len(variant_list)} strategic variants")
+        # Determine if we need patient response or therapist follow-up
+        needs_patient_response = (
+            len(parent_conversation) == 0 or  # Root node needs patient response
+            parent_conversation[-1]["role"] == "user"  # Last message was therapist, need patient response
+        )
         
-        # Process all 3 variants in parallel
-        variant_tasks = [
-            process_variant(variant_prompt, parent, parent_conversation, top_k_embeddings)
-            for variant_prompt in variant_list
-        ]
+        if needs_patient_response:
+            # Patient should respond to the current therapist statement
+            logger.info(f"  🎯 Getting patient response to therapist statement")
+            variant_tasks = [
+                process_patient_response(parent.prompt, parent, parent_conversation, top_k_embeddings)
+                for _ in range(3)  # Generate 3 different patient responses
+            ]
+        else:
+            # Generate therapist follow-ups based on patient's response
+            logger.info(f"  🧬 Generating therapist follow-ups based on patient response")
+            variant_list = await variants(parent_conversation, k=3)
+            variant_tasks = [
+                process_variant(variant_prompt, parent, parent_conversation, top_k_embeddings)
+                for variant_prompt in variant_list
+            ]
         
         children = await asyncio.gather(*variant_tasks, return_exceptions=True)
         

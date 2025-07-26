@@ -317,6 +317,19 @@ body {
     border-left-color: #ff6600;
 }
 
+.critic-message {
+    background: rgba(255, 255, 0, 0.1);
+    border-left-color: #ffaa44;
+    margin: 10px 0;
+    font-style: italic;
+}
+
+.critic-content {
+    font-size: 0.9em;
+    color: #cccccc;
+    white-space: pre-line;
+}
+
 .message-header {
     display: flex;
     justify-content: space-between;
