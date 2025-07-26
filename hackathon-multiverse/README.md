@@ -1,6 +1,6 @@
-# Hackathon Multiverse
+# Hackathon Multiverse - System Prompt Optimization
 
-AI-powered prompt exploration system using MCTS and multi-agent orchestration.
+AI-powered system prompt optimization framework using evolutionary algorithms and multi-agent orchestration. The system evolves optimal instructions (system prompts) for LLM agents to achieve specific goals.
 
 ## Complete System Startup Guide
 
@@ -41,11 +41,11 @@ python frontend/server.py
 cd /Users/matthieuhuss/AdventureX-Final/hackathon-multiverse
 source .venv/bin/activate
 
-# Clear any old data and seed a conversation
+# Clear any old data and seed system prompts
 redis-cli flushall
-curl -X POST localhost:8000/seed -d '{"prompt": "President Putin, how might we build lasting peace between Russia and the West?"}' -H "Content-Type: application/json"
+python scripts/dev_seed.py  # Seeds initial system prompts
 
-# Start the parallel worker
+# Start the parallel worker (evolves system prompts)
 python -m backend.worker.parallel_worker
 ```
 
@@ -53,26 +53,32 @@ python -m backend.worker.parallel_worker
 
 ```bash
 cd /Users/matthieuhuss/AdventureX-Final/hackathon-multiverse
+source .venv/bin/activate
 python -m visualization.live_monitor
 ```
 
 ### What You'll See
 
 1. **Web Interface (localhost:3000)**: Matrix-style real-time visualization showing:
-   - Semantic space exploration with colored nodes (red=hostile, green=progress)
-   - Live statistics (total nodes, avg trajectory score, max depth)
-   - Real-time activity log of new nodes being created
-   - Clickable "Best Conversations" showing highest-scoring dialogue paths
-2. **Worker Terminal**: Strategic conversation processing with logs like:
+   - System prompt evolution in 2D semantic space
+   - Color-coded nodes by effectiveness (red=poor, green=effective)
+   - Live statistics (total prompts tested, avg score, generations)
+   - Real-time activity log of new system prompts being evolved
+   - Clickable nodes to see system prompts and their test conversations
+
+2. **Worker Terminal**: System prompt evolution logs like:
 
    ```
-   🔄 Processing node depth=2 prompt='Human: I appreciate your thoughts...'
-   📚 Conversation context: 2 turns, last reply: 'I agree that collaboration...'
-   🧬 Generated 3 strategic variants
-   ✅ Child created TRAJECTORY_SCORE=0.800 priority=0.694
+   🔄 Processing bea8a669... depth=2 system_prompt='You are a diplomatic negotiator...'
+   📊 Parent performance: avg_score=0.600, samples=3
+   🧬 Generated 3 system prompt variants
+   📝 Testing system prompt across 3 scenarios
+   ✅ Child AVG_SCORE=0.750 priority=0.694
+   📝 System prompt: 'You are an empathetic negotiator who builds trust...'
+   📊 Results: 3 conversations, 33.3% success, 4.5 avg turns
    ```
 
-3. **Terminal Monitor**: ASCII dashboard with growth charts and real-time stats
+3. **Terminal Monitor**: ASCII dashboard with evolution progress and real-time stats
 
 ### Quick Docker Alternative
 
@@ -135,34 +141,38 @@ The long-run demo is perfect for observing AI exploration patterns over time wit
 
 ## What You'll Observe
 
-- **Strategic Conversation Optimization**: AI system learns to move Putin from hostility toward peace negotiations
-- **Live exploration**: Watch nodes appear in real-time as AI explores different conversational angles
-- **Semantic space positioning**: Nodes positioned in 2D space based on OpenAI embeddings
-- **Conversation-aware mutations**: Strategic follow-ups that build on Putin's actual responses
-- **Trajectory scoring**: Full conversations scored toward reconciliation goal (0.0=hostile, 1.0=ready for peace)
-- **Tree structure**: Parent-child relationships showing conversation depth and branching
-- **Priority-based expansion**: Higher-scoring conversation paths get processed first
-- **Parallel processing**: 20 nodes processed simultaneously for 20x speed improvement
-- **Real-time metrics**: Velocity tracking shows nodes/second generation rate
-- **Interactive conversations**: Click any high-scoring conversation to see the full Human↔Putin dialogue
+- **System Prompt Evolution**: AI discovers optimal instructions for achieving goals
+- **Meta-Learning**: System learns "how to think" rather than "what to say"
+- **Live Evolution**: Watch system prompts evolve in real-time semantic space
+- **Plateau Detection**: Conversations stop naturally when improvement plateaus
+- **Multi-Scenario Testing**: Each system prompt tested across multiple conversation scenarios
+- **Effectiveness Scoring**: Prompts evaluated based on average conversation performance
+- **Generational Improvement**: Track how system prompts improve over generations
+- **Tree Structure**: Parent-child relationships showing evolution lineage
+- **Priority-Based Selection**: Best-performing prompts prioritized for further evolution
+- **Comprehensive Metrics**: Success rates, efficiency scores, consistency measurements
+- **Interactive Exploration**: Click nodes to see system prompts and sample conversations
 
 ## Key Features
 
-### Goal-Directed Optimization Framework
+### System Prompt Optimization Framework
 
-This system demonstrates a general framework for optimizing LLM interactions toward specific objectives:
+This system implements a meta-learning framework that evolves optimal instructions for LLM agents:
 
-- **Clone Model**: Target LLM to influence (Putin persona)
-- **Judge Model**: Objective function scoring progress toward goal (reconciliation critic)
-- **Mutator**: Strategic prompt generation based on conversation history
-- **Exploration**: MCTS-inspired priority system balances exploitation vs exploration
+- **System Prompt Evolution**: Discovers effective instructions through evolutionary algorithms
+- **Target Persona**: The LLM agent to influence (e.g., Putin persona)
+- **Objective Function**: Scores conversation effectiveness toward goal
+- **Plateau Detection**: Natural conversation termination when improvement plateaus
+- **Multi-Scenario Testing**: Each prompt tested across diverse conversation scenarios
+- **Priority System**: MCTS-inspired selection balances exploitation vs exploration
 
 ### Real-Time Visualization
 
-- **Matrix-style interface** showing semantic exploration in 2D space
-- **Color-coded nodes** by trajectory score (red=hostile, orange=neutral, green=progress)
-- **Live activity feed** with emoji-enhanced logging
-- **Best conversations panel** with clickable dialogue viewers
-- **WebSocket integration** for real-time updates as conversations evolve
+- **Matrix-style interface** showing system prompt evolution in 2D space
+- **Color-coded nodes** by effectiveness (red=poor, orange=moderate, green=effective)
+- **Live activity feed** tracking new system prompt discoveries
+- **Interactive nodes** click to view system prompts and test conversations
+- **WebSocket integration** for real-time updates as prompts evolve
+- **Terminal monitor** with ASCII charts showing evolution progress
 
 License: MIT

@@ -110,7 +110,7 @@ def refit_reducer_if_needed() -> None:
             
         # Check if we need to refit (every 50 nodes or if no reducer exists)
         if _load_reducer() is None or len(nodes) % 50 == 0:
-            prompts = [node.prompt for node in nodes if node.prompt]
+            prompts = [node.system_prompt for node in nodes if hasattr(node, 'system_prompt') and node.system_prompt]
             if len(prompts) >= 10:
                 logger.info(f"Refitting UMAP reducer with {len(prompts)} prompts")
                 fit_reducer(prompts)

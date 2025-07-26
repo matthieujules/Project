@@ -4,11 +4,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a **goal-directed conversation optimization framework** disguised as a hackathon project. The system demonstrates how to systematically optimize LLM interactions toward specific objectives using conversation-aware mutations and trajectory scoring.
+This is a **system prompt optimization framework** that uses evolutionary algorithms to discover optimal instructions for LLM agents. The system evolves system prompts (instructions) rather than conversation content, implementing a meta-learning approach to find the most effective strategies for achieving specific goals.
 
-**Current Demo**: Moving Putin from hostility toward accepting peace negotiations through strategic conversation optimization.
+**Current Demo**: Finding the optimal system prompt for a diplomatic negotiator agent to guide Putin toward accepting peace negotiations.
 
-**General Framework**: Can be adapted for any goal (sales conversion, support resolution, persuasion, etc.) by changing the clone model (target) and critic model (objective function).
+**General Framework**: Can be adapted for any goal (sales conversion, support resolution, persuasion, etc.) by changing the persona model (target) and critic model (objective function).
+
+## IMPORTANT: System Prompt Optimization
+
+The codebase has been refactored from conversation optimization to **system prompt optimization**. Key differences:
+
+1. **Nodes contain system prompts** (instructions for the agent) not conversation messages
+2. **Evolution happens at the instruction level** - we evolve "how to think" not "what to say"
+3. **Each system prompt is tested** by generating multiple conversations with plateau detection
+4. **Scoring evaluates system prompt effectiveness** based on average conversation performance
 
 ## Complete Architecture
 
@@ -20,20 +29,20 @@ This is a **goal-directed conversation optimization framework** disguised as a h
 - **Real-time web visualization** with Matrix-style interface
 - **Conversation reconstruction system** for full dialogue threading
 
-### Data Flow (Conversation-Aware)
+### Data Flow (System Prompt Optimization)
 ```
-Seed Prompt → Frontier → Parallel Worker → 
-[Get Conversation History] → Strategic Mutator → Putin Persona → 
-Full Conversation → Trajectory Critic → Priority Score → 
-New Nodes → Back to Frontier
+Initial System Prompts → Frontier → Parallel Worker → 
+System Prompt Mutator → Generate Test Conversations → 
+Evaluate with Plateau Detection → Average Score → 
+Priority Calculation → New System Prompt Nodes → Back to Frontier
 ```
 
 ### Revolutionary Changes Made
-1. **Conversation-Aware Mutations**: Mutator sees full dialogue history, not just parent prompt
-2. **Trajectory Scoring**: Critic evaluates entire conversation progress toward goal, not individual turns  
-3. **Real Semantic Embeddings**: OpenAI text-embedding-3-small for true similarity calculations
-4. **Strategic Follow-ups**: System builds on Putin's actual responses rather than random variations
-5. **Parallel Processing**: 20 nodes × 3 variants × parallel processing = blazing speed
+1. **System Prompt Evolution**: We evolve instructions (system prompts) not conversation content
+2. **Meta-Learning Approach**: Optimizes "how to think" rather than "what to say"
+3. **Plateau Detection**: Conversations stop naturally when improvement plateaus
+4. **Multi-Scenario Testing**: Each system prompt tested across multiple conversation scenarios
+5. **Comprehensive Evaluation**: Detailed metrics including efficiency, consistency, and success rates
 
 ## Essential Commands
 
@@ -94,20 +103,25 @@ Where:
 - similarity = max similarity to top-k nodes
 - depth = node depth in tree
 
-### Agent Implementations (Real AI Integration)
-- **`backend/agents/mutator.py`**: Strategic conversation designer using GPT-4o-mini
-  - Input: Full conversation history (`List[Dict[str, str]]`)
-  - Output: 3 strategic follow-ups that build on Putin's responses
-  - System prompt: "Generate next message to move Putin closer to peace negotiations"
+### Agent Implementations (System Prompt Optimization)
+- **`backend/agents/system_prompt_mutator.py`**: System prompt evolver using deepseek
+  - Input: Parent system prompt and performance data
+  - Output: k variations of improved system prompts
+  - Purpose: Generates evolved instructions based on performance feedback
+
+- **`backend/agents/mutator.py`**: Conversation agent with dynamic system prompt
+  - Input: Conversation history and **custom system prompt**
+  - Output: Strategic next message based on given instructions
+  - Now accepts dynamic system prompts for testing different strategies
 
 - **`backend/agents/persona.py`**: Putin persona using GPT-4o-mini  
-  - Input: Strategic prompt from mutator
+  - Input: Message from mutator agent
   - Output: Putin's response maintaining character consistency
   - System prompt: "You are Vladimir Putin responding about peace and conflict"
 
-- **`backend/agents/critic.py`**: Trajectory evaluator using GPT-4o-mini
-  - Input: Full conversation history from root to current node
-  - Output: 0.0-1.0 score measuring progress toward reconciliation
+- **`backend/agents/critic.py`**: Conversation evaluator using GPT-4o-mini
+  - Input: Full conversation history
+  - Output: 0.0-1.0 score measuring progress toward goal
   - System prompt: "Score how much Putin has moved toward accepting peace negotiations"
 
 ### Focus Zone Behavior
@@ -138,17 +152,31 @@ Set via environment variables or `.env` file:
 
 ## Key Files and Implementation Details
 
-### Core Conversation Logic
-- **`backend/core/conversation.py`**: Conversation path reconstruction
-  - `get_conversation_path(node_id)`: Traces back to root node
-  - `format_dialogue_history()`: Converts to alternating user/assistant messages
-  - `format_conversation_for_display()`: Pretty formatting for LLMs
+### System Prompt Optimization Core
+- **`backend/agents/system_prompt_mutator.py`**: System prompt evolution
+  - `generate_initial_system_prompts()`: Creates diverse starting prompts
+  - `mutate_system_prompt()`: Evolves prompts based on performance
+  
+- **`backend/core/conversation_generator.py`**: System prompt testing
+  - `evaluate_system_prompt()`: Tests prompts across multiple scenarios
+  - `generate_test_conversations()`: Creates conversations with plateau detection
+  - `should_stop_conversation()`: Implements plateau detection logic
 
+- **`backend/core/evaluation.py`**: Comprehensive metrics
+  - `comprehensive_system_prompt_evaluation()`: Full evaluation suite
+  - `compare_system_prompts()`: Head-to-head comparison
+  - `analyze_system_prompt_evolution()`: Tracks improvement over generations
+
+### Core System Logic  
+- **`backend/core/conversation.py`**: System prompt path reconstruction
+  - `get_system_prompt_path(node_id)`: Traces evolution history
+  - `format_system_prompt_for_display()`: Formats for visualization
+  
 ### Parallel Processing Engine  
-- **`backend/worker/parallel_worker.py`**: 20-node batch processor
-  - `process_batch()`: Processes 20 nodes simultaneously
-  - `process_node()`: Gets conversation context, generates 3 strategic variants  
-  - `process_variant()`: Persona → full conversation → trajectory scoring
+- **`backend/worker/parallel_worker.py`**: System prompt processor
+  - `process_batch()`: Processes multiple system prompts simultaneously
+  - `process_system_prompt_node()`: Generates and evaluates variants
+  - `process_system_prompt_variant()`: Tests via conversation generation
 
 ### Real Embeddings Integration
 - **`backend/core/embeddings.py`**: OpenAI text-embedding-3-small
@@ -167,26 +195,29 @@ Set via environment variables or `.env` file:
   - `data_fetcher.py`: API data retrieval utilities
 
 ### Database Schema
-- **Nodes stored in Redis** with conversation threading:
+- **Nodes stored in Redis** with system prompt evolution:
   - `id`: Unique identifier
-  - `prompt`: Human message for this turn
-  - `reply`: Putin's response  
-  - `score`: Trajectory score (0.0-1.0)
-  - `parent`: Parent node ID for conversation chaining
-  - `depth`: Conversation depth
-  - `emb`: OpenAI embedding vector
+  - `system_prompt`: Instructions for the mutator agent
+  - `conversation_samples`: Test conversations generated with this prompt
+  - `score`: Average effectiveness score (0.0-1.0)
+  - `avg_score`: Explicit average score across all samples
+  - `sample_count`: Number of test conversations run
+  - `parent`: Parent node ID for evolution tracking
+  - `depth`: Generation number in evolution
+  - `emb`: OpenAI embedding vector of system prompt
   - `xy`: 2D coordinates for visualization
 
 ## Debugging and Monitoring
 
 ### What Working Logs Look Like
 ```
-🔄 Processing bea8a669... depth=2 prompt='Human: I appreciate your thoughts...'
-📚 Conversation context: 2 turns, last reply: 'I agree that collaboration...'
-🧬 Generated 3 strategic variants
-✅ Child TRAJECTORY_SCORE=0.800 priority=0.694
-📝 Strategic prompt: 'Since you mentioned collaboration benefits...'
-🎯 Putin replied: 'Joint economic projects could be acceptable...'
+🔄 Processing bea8a669... depth=2 system_prompt='You are a diplomatic negotiator focused on...'
+📊 Parent performance: avg_score=0.600, samples=3
+🧬 Generated 3 system prompt variants
+📝 Testing system prompt across 3 scenarios
+✅ Child AVG_SCORE=0.750 priority=0.694
+📝 System prompt: 'You are an empathetic negotiator who builds trust through...'
+📊 Results: 3 conversations, 33.3% success, 4.5 avg turns
 ```
 
 ### Performance Metrics  
@@ -199,13 +230,16 @@ Set via environment variables or `.env` file:
 
 To adapt this framework for different objectives:
 
-1. **Change Clone Model** (`backend/agents/persona.py`):
-   - Replace Putin with target persona (customer, support agent, etc.)
+1. **Change Target Persona** (`backend/agents/persona.py`):
+   - Replace Putin with your target (customer, user, patient, etc.)
+   - Update the persona's system prompt to match their behavior
    
 2. **Update Objective Function** (`backend/agents/critic.py`):
-   - Replace "reconciliation" with your goal (purchase, resolution, etc.)
+   - Replace "peace negotiation" scoring with your goal
+   - Modify scoring criteria to match your success metrics
    
-3. **Modify Strategic Context** (`backend/agents/mutator.py`):
-   - Update system prompt for your optimization objective
+3. **Adjust Initial System Prompts** (`backend/agents/system_prompt_mutator.py`):
+   - Update `INITIAL_SYSTEM_PROMPT_TEMPLATES` for your domain
+   - Ensure diverse starting strategies for exploration
 
-The conversation-aware architecture remains the same - only the personas and objectives change!
+The system prompt optimization framework remains the same - it will automatically discover the most effective instructions for your specific goal!

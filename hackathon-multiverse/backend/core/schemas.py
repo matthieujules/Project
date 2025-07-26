@@ -1,16 +1,18 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 
 class Node(BaseModel):
     id: str
-    prompt: str
-    reply: Optional[str] = None
-    score: Optional[float] = None
-    depth: int
+    system_prompt: str  # Instructions for the mutator agent
+    conversation_samples: List[Dict] = []  # Test conversations generated
+    score: Optional[float] = None  # Average score across conversation samples
+    avg_score: Optional[float] = None  # Explicit average for clarity
+    sample_count: int = 0  # Number of test conversations
+    depth: int  # Generations of system prompt evolution
     parent: Optional[str] = None
-    emb: Optional[List[float]] = None
-    xy: Optional[List[float]] = None  # Store as list for JSON serialization
+    emb: Optional[List[float]] = None  # Embedding of system prompt text
+    xy: Optional[List[float]] = None  # Position in prompt space
     prompt_tokens: Optional[int] = None
     completion_tokens: Optional[int] = None
     agent_cost: Optional[float] = None

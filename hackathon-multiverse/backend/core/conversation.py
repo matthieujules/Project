@@ -3,8 +3,8 @@ from backend.core.schemas import Node
 from backend.db.node_store import get
 
 
-def get_conversation_path(node_id: str) -> List[Node]:
-    """Trace back from a node to the root, building full conversation path."""
+def get_system_prompt_path(node_id: str) -> List[Node]:
+    """Trace back from a node to the root, building system prompt evolution path."""
     path = []
     current_node = get(node_id)
     
@@ -18,16 +18,20 @@ def get_conversation_path(node_id: str) -> List[Node]:
     return list(reversed(path))  # Root to leaf order
 
 
-def format_dialogue_history(conversation_path: List[Node]) -> List[Dict[str, str]]:
-    """Convert conversation path to alternating user/assistant messages."""
-    dialogue = []
+def format_dialogue_history(conversation_samples: List[Dict]) -> List[Dict[str, str]]:
+    """Format conversation samples for display.
     
-    for node in conversation_path:
-        dialogue.append({"role": "user", "content": node.prompt})
-        if node.reply:
-            dialogue.append({"role": "assistant", "content": node.reply})
+    In the new system, conversation samples are stored in nodes, not built from a path.
+    This function extracts dialogue from a sample conversation.
+    """
+    if not conversation_samples:
+        return []
     
-    return dialogue
+    # Take the first conversation sample
+    first_sample = conversation_samples[0] if conversation_samples else {}
+    conversation = first_sample.get('conversation', [])
+    
+    return conversation
 
 
 def format_conversation_for_display(conversation_history: List[Dict[str, str]]) -> str:

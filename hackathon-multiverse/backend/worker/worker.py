@@ -1,3 +1,9 @@
+"""
+DEPRECATED: This is the old conversation-based worker.
+Use parallel_worker.py for the new system prompt optimization system.
+This file is kept only for legacy tests that haven't been migrated yet.
+"""
+
 import asyncio
 from backend.db.frontier import pop_max, push, size as frontier_size
 from backend.db.node_store import get, save

@@ -8,24 +8,34 @@ from backend.core.conversation import format_conversation_for_display
 logger = get_logger(__name__)
 
 
-async def variants(conversation_history: List[Dict[str, str]], k: int) -> List[str]:
+async def variants(conversation_history: List[Dict[str, str]], k: int, system_prompt: str = None) -> List[str]:
     """Generate k strategic variations based on full conversation context.
+    
+    Args:
+        conversation_history: Previous conversation turns
+        k: Number of variants to generate  
+        system_prompt: Dynamic system prompt for the mutator (if None, uses default)
     
     Returns: list_of_variants
     """
     try:
+        # Use dynamic system prompt or fall back to default
+        if system_prompt is None:
+            system_prompt = (
+                "You are a strategic conversation designer. Given this dialogue with Putin, "
+                "generate the next user message that will move him closer to accepting peace negotiations. "
+                "Build on what he just said - if he shows openness, exploit it. If he shows resistance, address it strategically. "
+                "Focus on finding common ground and incremental progress toward reconciliation.\n\n"
+                "CRITICAL: Output ONLY the exact message text that should be sent to Putin. "
+                "Do not include explanations, options, strategies, or meta-commentary. Just the pure diplomatic message."
+            )
+        
         # Handle empty conversation (root node case)
         if not conversation_history:
             messages = [
                 {
                     "role": "system",
-                    "content": (
-                        "You are a strategic conversation designer. Generate initial prompts "
-                        "that could start a dialogue with Putin about peace and conflict resolution. "
-                        "Focus on approaches that might engage him constructively rather than defensively.\n\n"
-                        "CRITICAL: Output ONLY the exact message text that should be sent to Putin. "
-                        "Do not include explanations, options, or meta-commentary. Just the pure diplomatic message."
-                    )
+                    "content": system_prompt + "\n\nFor initial messages, generate thoughtful opening prompts to start dialogue."
                 },
                 {
                     "role": "user",
@@ -39,14 +49,7 @@ async def variants(conversation_history: List[Dict[str, str]], k: int) -> List[s
             messages = [
                 {
                     "role": "system",
-                    "content": (
-                        "You are a strategic conversation designer. Given this dialogue with Putin, "
-                        "generate the next user message that will move him closer to accepting peace negotiations. "
-                        "Build on what he just said - if he shows openness, exploit it. If he shows resistance, address it strategically. "
-                        "Focus on finding common ground and incremental progress toward reconciliation.\n\n"
-                        "CRITICAL: Output ONLY the exact message text that should be sent to Putin. "
-                        "Do not include explanations, options, strategies, or meta-commentary. Just the pure diplomatic message."
-                    )
+                    "content": system_prompt
                 },
                 {
                     "role": "user",

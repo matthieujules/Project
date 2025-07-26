@@ -1,4 +1,4 @@
-class MultiverseVisualizer {
+class SystemPromptVisualizer {
     constructor() {
         this.canvas = document.getElementById('graphCanvas');
         this.ctx = this.canvas.getContext('2d');
@@ -24,6 +24,7 @@ class MultiverseVisualizer {
             this.nodes = await response.json();
             this.updateStats();
             console.log(`Loaded ${this.nodes.length} initial nodes`);
+            console.log('Sample node structure:', this.nodes[0]);
         } catch (error) {
             console.error('Failed to load initial data:', error);
             this.addToActivityLog('❌ Failed to load initial graph data', 'error');
@@ -91,8 +92,12 @@ class MultiverseVisualizer {
         });
         
         this.canvas.addEventListener('mouseup', (e) => {
-            if (!isDragging) {
-                // Check if click is on a node
+            const dragDistance = Math.sqrt((e.offsetX - lastX) ** 2 + (e.offsetY - lastY) ** 2);
+            console.log('Mouse up - isDragging:', isDragging, 'dragDistance:', dragDistance);
+            
+            // Only treat as click if we didn't drag more than 5 pixels
+            if (!isDragging || dragDistance < 5) {
+                console.log('Treating as click, checking for nodes...');
                 this.handleCanvasClick(e.offsetX, e.offsetY);
             }
             isDragging = false;
@@ -100,9 +105,18 @@ class MultiverseVisualizer {
     }
     
     handleCanvasClick(canvasX, canvasY) {
+        console.log('Canvas clicked at:', canvasX, canvasY);
         const clickedNode = this.findNodeAtPosition(canvasX, canvasY);
+        console.log('Found node:', clickedNode);
         if (clickedNode) {
-            this.showNodeDetailsModal(clickedNode);
+            console.log('Calling showNodeDetailsModal for node:', clickedNode.id);
+            if (typeof this.showNodeDetailsModal === 'function') {
+                this.showNodeDetailsModal(clickedNode);
+            } else {
+                console.error('showNodeDetailsModal is not a function!');
+            }
+        } else {
+            console.log('No node found at click position');
         }
     }
     
@@ -146,11 +160,12 @@ class MultiverseVisualizer {
         modal.innerHTML = `
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2>Node Details</h2>
+                    <h2>System Prompt Node Details</h2>
                     <div class="node-meta">
                         ID: ${node.id.slice(0, 12)}... | 
-                        Score: ${node.score?.toFixed(3) || 'N/A'} | 
-                        Depth: ${this.getNodeDepth(node)} |
+                        Score: ${(node.avg_score || node.score || 0).toFixed(3)} | 
+                        Generation: ${this.getNodeDepth(node)} |
+                        Samples: ${node.sample_count || 0} |
                         Position: (${node.xy[0]?.toFixed(2)}, ${node.xy[1]?.toFixed(2)})
                     </div>
                     <span class="close">&times;</span>
@@ -158,20 +173,31 @@ class MultiverseVisualizer {
                 <div class="modal-body">
                     <div class="node-details">
                         <div class="detail-section">
-                            <h3>Original Text (Pre-embedding):</h3>
-                            <div class="original-text">${node.prompt || 'No prompt available'}</div>
+                            <h3>System Prompt:</h3>
+                            <div class="system-prompt-text">${node.system_prompt_preview || node.system_prompt || 'No system prompt available'}</div>
                         </div>
                         
-                        ${node.reply ? `
+                        ${node.conversation_samples && node.conversation_samples.length > 0 ? `
                         <div class="detail-section">
-                            <h3>Putin's Response:</h3>
-                            <div class="putin-response">${node.reply}</div>
+                            <h3>Sample Conversations (${node.conversation_samples.length}):</h3>
+                            <div class="conversation-samples">
+                                ${node.conversation_samples.slice(0, 2).map((sample, i) => `
+                                    <div class="sample-conversation">
+                                        <div class="sample-header">Sample ${i + 1} - Score: ${sample.score?.toFixed(3) || 'N/A'}</div>
+                                        <div class="sample-content">
+                                            ${sample.conversation ? this.formatConversationHTML(sample.conversation.slice(0, 4)) : 'No conversation data'}
+                                            ${sample.conversation && sample.conversation.length > 4 ? '<div class="conversation-truncated">... (conversation truncated)</div>' : ''}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                                ${node.conversation_samples.length > 2 ? `<div class="more-samples">... and ${node.conversation_samples.length - 2} more samples</div>` : ''}
+                            </div>
                         </div>
-                        ` : ''}
+                        ` : '<div class="detail-section"><h3>Sample Conversations:</h3><div class="no-samples">No sample conversations available</div></div>'}
                         
                         ${evolutionPath.length > 1 ? `
                         <div class="detail-section">
-                            <h3>Evolution Path (${evolutionPath.length} steps):</h3>
+                            <h3>Evolution Path (${evolutionPath.length} generations):</h3>
                             <div class="evolution-path">
                                 ${this.renderEvolutionPath(evolutionPath)}
                             </div>
@@ -222,23 +248,26 @@ class MultiverseVisualizer {
         }
         
         this.updateStats();
-        this.updateBestConversations();
-        this.updateWorstConversations();
+        this.updateBestSystemPrompts();
+        this.updateSampleConversations();
     }
     
     updateStats() {
         const totalNodes = this.nodes.length;
-        const scores = this.nodes.filter(n => n.score !== null).map(n => n.score);
+        const scores = this.nodes.filter(n => n.score !== null).map(n => n.avg_score || n.score);
         const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-        const maxDepth = Math.max(0, ...this.nodes.map(n => this.getNodeDepth(n)));
+        const maxGeneration = Math.max(0, ...this.nodes.map(n => n.depth || 0));
         
         document.getElementById('totalNodes').textContent = totalNodes;
         document.getElementById('avgScore').textContent = avgScore.toFixed(3);
-        document.getElementById('maxDepth').textContent = maxDepth;
+        document.getElementById('maxDepth').textContent = maxGeneration;
         
-        // Estimate frontier size (nodes with high scores that likely have children)
-        const frontierEstimate = this.nodes.filter(n => n.score > 0.6).length;
+        // Estimate frontier size (high-performing system prompts likely to be explored further)
+        const frontierEstimate = this.nodes.filter(n => (n.avg_score || n.score || 0) > 0.6).length;
         document.getElementById('frontierSize').textContent = frontierEstimate;
+        
+        // Update best system prompts panel
+        this.updateBestSystemPrompts();
     }
     
     getNodeDepth(node) {
@@ -256,52 +285,117 @@ class MultiverseVisualizer {
         return depth;
     }
     
-    updateBestConversations() {
+    updateBestSystemPrompts() {
         const bestNodes = this.nodes
             .filter(n => n.score !== null)
-            .sort((a, b) => b.score - a.score)
+            .sort((a, b) => (b.avg_score || b.score) - (a.avg_score || a.score))
             .slice(0, 5);
         
-        this.renderConversationList('bestConversations', bestNodes, 'best');
+        this.renderSystemPromptList('bestSystemPrompts', bestNodes);
     }
     
-    updateWorstConversations() {
-        const worstNodes = this.nodes
+    updateSampleConversations() {
+        // Show sample conversations from the best performing system prompt
+        const bestNode = this.nodes
             .filter(n => n.score !== null)
-            .sort((a, b) => a.score - b.score)
-            .slice(0, 5);
+            .sort((a, b) => (b.avg_score || b.score) - (a.avg_score || a.score))[0];
         
-        this.renderConversationList('worstConversations', worstNodes, 'worst');
+        if (bestNode) {
+            this.renderSampleConversations('sampleConversations', bestNode);
+        }
     }
     
-    renderConversationList(containerId, nodes, type) {
+    renderSystemPromptList(containerId, nodes) {
         const container = document.getElementById(containerId);
         container.innerHTML = '';
         
         if (nodes.length === 0) {
             const placeholder = document.createElement('div');
-            placeholder.className = 'conversation-placeholder';
-            placeholder.textContent = `No conversations yet...`;
+            placeholder.className = 'system-prompt-placeholder';
+            placeholder.textContent = `No system prompts yet...`;
             container.appendChild(placeholder);
             return;
         }
         
         nodes.forEach(node => {
             const div = document.createElement('div');
-            div.className = `conversation-item ${type}`;
+            div.className = 'system-prompt-item';
             div.style.cursor = 'pointer';
             
-            const scoreClass = node.score >= 0.7 ? 'high-score' : 
-                              node.score >= 0.4 ? 'medium-score' : 'low-score';
+            const score = node.avg_score || node.score;
+            const scoreClass = score >= 0.7 ? 'high-score' : 
+                              score >= 0.4 ? 'medium-score' : 'low-score';
+            
+            const promptPreview = node.system_prompt_preview || 
+                                  (node.system_prompt && node.system_prompt.slice(0, 80) + '...') || 
+                                  'System prompt preview not available';
             
             div.innerHTML = `
-                <div class="conversation-score ${scoreClass}">Score: ${node.score.toFixed(3)}</div>
-                <div class="conversation-text">Depth: ${this.getNodeDepth(node)} | ID: ${node.id.slice(0, 8)}...</div>
-                <div class="conversation-hint">Click to view full conversation</div>
+                <div class="system-prompt-score ${scoreClass}">Score: ${score.toFixed(3)}</div>
+                <div class="system-prompt-preview">${promptPreview}</div>
+                <div class="system-prompt-meta">Gen: ${node.depth || 0} | Samples: ${node.sample_count || 0}</div>
+                <div class="system-prompt-hint">Click to view details</div>
+            `;
+            
+            div.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                console.log('System prompt clicked:', node);
+                console.log('this context:', this);
+                console.log('window.visualizer:', window.visualizer);
+                
+                // Use window.visualizer explicitly to avoid scope issues
+                if (window.visualizer && typeof window.visualizer.showSystemPromptModal === 'function') {
+                    window.visualizer.showSystemPromptModal(node);
+                } else {
+                    console.error('window.visualizer.showSystemPromptModal is not available!');
+                    console.log('Available methods:', Object.getOwnPropertyNames(window.visualizer || {}));
+                }
+            });
+            
+            container.appendChild(div);
+        });
+    }
+    
+    renderSampleConversations(containerId, bestNode) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        
+        if (!bestNode || !bestNode.conversation_samples || bestNode.conversation_samples.length === 0) {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'conversation-placeholder';
+            placeholder.textContent = `No sample conversations available`;
+            container.appendChild(placeholder);
+            return;
+        }
+        
+        // Show up to 3 sample conversations
+        const samples = bestNode.conversation_samples.slice(0, 3);
+        
+        samples.forEach((sample, index) => {
+            const div = document.createElement('div');
+            div.className = 'conversation-sample';
+            div.style.cursor = 'pointer';
+            
+            const conversation = sample.conversation || [];
+            const score = sample.score || 0;
+            const turnCount = Math.floor(conversation.length / 2);
+            
+            const scoreClass = score >= 0.7 ? 'high-score' : 
+                              score >= 0.4 ? 'medium-score' : 'low-score';
+            
+            // Show first user message as preview
+            const firstMessage = conversation.find(msg => msg.role === 'user');
+            const preview = firstMessage ? firstMessage.content.slice(0, 60) + '...' : 'No preview available';
+            
+            div.innerHTML = `
+                <div class="conversation-score ${scoreClass}">Sample ${index + 1}: ${score.toFixed(3)}</div>
+                <div class="conversation-preview">${preview}</div>
+                <div class="conversation-meta">${turnCount} turns</div>
             `;
             
             div.addEventListener('click', () => {
-                this.showConversationModal(node.id);
+                this.showConversationModal(sample, bestNode);
             });
             
             container.appendChild(div);
@@ -340,7 +434,7 @@ class MultiverseVisualizer {
     
     async showConversationModal(nodeId) {
         try {
-            const response = await fetch(`http://localhost:8000/conversation/${nodeId}`);
+            const response = await fetch(`http://localhost:8000/conversation_samples/${nodeId}`);
             const data = await response.json();
             
             if (data.error) {
@@ -348,11 +442,69 @@ class MultiverseVisualizer {
                 return;
             }
             
-            this.createConversationModal(data);
+            this.createSystemPromptConversationModal(data);
         } catch (error) {
-            console.error('Failed to fetch conversation:', error);
-            alert('Failed to load conversation details');
+            console.error('Failed to fetch conversation samples:', error);
+            alert('Failed to load conversation samples');
         }
+    }
+    
+    createSystemPromptConversationModal(data) {
+        // Remove existing modal if present
+        const existingModal = document.getElementById('conversationModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Create modal
+        const modal = document.createElement('div');
+        modal.id = 'conversationModal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>System Prompt Test Conversations</h2>
+                    <div class="conversation-meta">
+                        Score: ${data.avg_score?.toFixed(3) || 'N/A'} | 
+                        Samples: ${data.sample_count} | 
+                        System Prompt: ${data.system_prompt}
+                    </div>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    ${data.conversation_samples && data.conversation_samples.length > 0 ? `
+                        <div class="conversation-samples-list">
+                            ${data.conversation_samples.map((sample, i) => `
+                                <div class="sample-conversation-full">
+                                    <div class="sample-header">
+                                        Test Conversation ${i + 1} 
+                                        <span class="sample-score">Score: ${sample.score?.toFixed(3) || 'N/A'}</span>
+                                    </div>
+                                    <div class="conversation-thread">
+                                        ${sample.conversation ? this.formatConversationHTML(sample.conversation) : 'No conversation data'}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : '<div class="no-conversations">No test conversations available for this system prompt.</div>'}
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Add event listeners
+        const closeBtn = modal.querySelector('.close');
+        closeBtn.addEventListener('click', () => modal.remove());
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+        
+        // Show modal
+        modal.style.display = 'block';
     }
     
     createConversationModal(conversationData) {
@@ -417,6 +569,69 @@ class MultiverseVisualizer {
                 </div>
             `;
         }).join('');
+    }
+    
+    showSystemPromptModal(node) {
+        // Remove existing modal if present
+        const existingModal = document.getElementById('systemPromptModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Create modal
+        const modal = document.createElement('div');
+        modal.id = 'systemPromptModal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>System Prompt Details</h2>
+                    <div class="system-prompt-meta">
+                        Score: ${(node.avg_score || node.score || 0).toFixed(3)} | 
+                        Generation: ${node.depth || 0} | 
+                        Samples: ${node.sample_count || 0}
+                    </div>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="system-prompt-section">
+                        <h3>System Prompt:</h3>
+                        <div class="system-prompt-text">${node.system_prompt_preview || node.system_prompt || 'No system prompt available'}</div>
+                    </div>
+                    
+                    ${node.conversation_samples && node.conversation_samples.length > 0 ? `
+                        <div class="conversation-samples-section">
+                            <h3>Sample Conversations:</h3>
+                            <div class="conversation-samples">
+                                ${node.conversation_samples.slice(0, 3).map((sample, i) => `
+                                    <div class="sample-conversation">
+                                        <div class="sample-header">Sample ${i + 1} (Score: ${sample.score?.toFixed(3) || 'N/A'})</div>
+                                        <div class="sample-content">
+                                            ${sample.conversation ? this.formatConversationHTML(sample.conversation) : 'No conversation data'}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : '<div class="no-samples">No sample conversations available</div>'}
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Add event listeners
+        const closeBtn = modal.querySelector('.close');
+        closeBtn.addEventListener('click', () => modal.remove());
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+        
+        // Show modal
+        modal.style.display = 'block';
     }
     
     renderGraph() {
@@ -549,18 +764,21 @@ class MultiverseVisualizer {
         return evolutionPath.map((pathNode, index) => {
             const isLast = index === evolutionPath.length - 1;
             const isRoot = index === 0;
-            const stepLabel = isRoot ? 'ROOT' : `Step ${index}`;
+            const stepLabel = isRoot ? 'ROOT' : `Gen ${index}`;
             
             return `
                 <div class="evolution-step ${isLast ? 'current-node' : ''}">
                     <div class="step-header">
                         <span class="step-label">${stepLabel}</span>
-                        <span class="step-score">Score: ${pathNode.score?.toFixed(3) || 'N/A'}</span>
+                        <span class="step-score">Score: ${(pathNode.avg_score || pathNode.score || 0).toFixed(3)}</span>
+                        <span class="step-samples">Samples: ${pathNode.sample_count || 0}</span>
                         <span class="step-id">${pathNode.id.slice(0, 8)}...</span>
                     </div>
                     <div class="step-content">
-                        <div class="step-prompt">${pathNode.prompt || 'Root node'}</div>
-                        ${pathNode.reply ? `<div class="step-reply">→ ${pathNode.reply.slice(0, 100)}${pathNode.reply.length > 100 ? '...' : ''}</div>` : ''}
+                        <div class="step-system-prompt">${(pathNode.system_prompt || pathNode.system_prompt_preview || 'Initial system prompt').slice(0, 120)}${(pathNode.system_prompt || '').length > 120 ? '...' : ''}</div>
+                        ${pathNode.conversation_samples && pathNode.conversation_samples.length > 0 ? 
+                            `<div class="step-samples-info">${pathNode.conversation_samples.length} test conversation${pathNode.conversation_samples.length > 1 ? 's' : ''}</div>` : 
+                            '<div class="step-samples-info">No test conversations</div>'}
                     </div>
                     ${!isLast ? '<div class="evolution-arrow">↓</div>' : ''}
                 </div>
@@ -596,5 +814,11 @@ class MultiverseVisualizer {
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {
-    window.visualizer = new MultiverseVisualizer();
+    window.visualizer = new SystemPromptVisualizer();
+    console.log('SystemPromptVisualizer initialized');
+    console.log('Available methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(window.visualizer)));
+    
+    // Debug: Try calling the function directly
+    console.log('showSystemPromptModal function:', window.visualizer.showSystemPromptModal);
+    console.log('typeof showSystemPromptModal:', typeof window.visualizer.showSystemPromptModal);
 });
