@@ -1,6 +1,13 @@
 # Hackathon Multiverse
 
-An AI-driven hackathon project that evolves NFT sales strategies by optimizing the **system prompts** given to large language model (LLM) agents. The platform explores, evaluates, and visualizes how different instructions influence conversations with skeptical crypto investors, helping teams iterate on go-to-market messaging in real time.
+
+An AI-driven hackathon project that evolves NFT sales strategies by optimizing the **system prompts** given to large language model (LLM) agents. The platform explores, evaluates, and visualizes how different instructions influence conversations with skeptical crypto investors, helping teams iterate on go-to-market messaging in real time. Can toggle to another branch to enable the version that creates entire conversation trees to find the best path with a set system prompt.
+
+<img width="960" height="540" alt="image" src="https://github.com/user-attachments/assets/3ffd20b8-995f-42ce-89c0-bc80101807dd" />
+
+<img width="415" height="182" alt="image" src="https://github.com/user-attachments/assets/5a7bb67c-5093-4b6b-9411-7dd2ae0bb248" />
+
+
 
 ---
 
